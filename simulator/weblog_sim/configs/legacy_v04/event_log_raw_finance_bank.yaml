@@ -1,0 +1,17 @@
+event_log_raw:
+  source_table: stg_wc_log_hit
+  target_table: event_log_raw
+  source_type_default: wc
+
+lineage:
+  source_file_table: source_file_manifest
+  raw_snapshot_table: raw_snapshot_manifest
+  exogenous_table: exogenous_state_snapshot
+
+inference:
+  service_domain: true
+  page_type: true
+  evt: true
+  funnel_stage: true
+  is_conversion: true
+  kv_fallback: true

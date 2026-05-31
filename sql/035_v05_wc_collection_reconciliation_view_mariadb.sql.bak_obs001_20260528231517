@@ -1,0 +1,25 @@
+-- CASE-OBS-001 optional review view. The authoritative OBS signal is built directly
+-- by pipelines.commerce.observability.build_v05_observability_signal_day.
+CREATE OR REPLACE VIEW v05_wc_collection_reconciliation_day AS
+SELECT
+  o.profile_id,
+  o.target_date,
+  o.scenario_name,
+  o.source_gen_run_id,
+  o.run_id,
+  o.web_hits,
+  o.wc_hits,
+  o.collection_gap_count,
+  o.collection_gap_rate,
+  o.web_uv_ip,
+  o.wc_uv_pcid,
+  o.uv_gap_rate,
+  o.web_checkout_hits,
+  o.wc_checkout_hits,
+  o.checkout_missing_rate,
+  o.web_product_hits,
+  o.wc_product_hits,
+  o.product_missing_rate,
+  o.observability_signal_level AS observability_risk_level,
+  o.suspected_root_cause
+FROM v05_observability_signal_day o;

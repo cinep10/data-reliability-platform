@@ -1,0 +1,59 @@
+# v0.5 commerce validation contracts
+# Consumed conceptually by validate_v05_commerce_run.py.
+# Current Python script embeds these rules for zero-dependency runtime stability.
+#
+# Important distinction:
+# - behavior_only_anomaly: transaction/state intentionally zero
+# - transaction_missing_anomaly: partial transaction missing / behavior-transaction match degradation
+# - state_missing_anomaly: state missing/degraded / transaction-state match degradation
+
+scenarios:
+  baseline:
+    behavior_rows: positive
+    transaction_rows: positive
+    state_rows: positive
+    reconciliation_required: true
+    expected_risk_level: low
+    expected_action: no action
+
+  source_partial_missing:
+    behavior_rows: positive_or_reduced
+    transaction_rows: positive
+    state_rows: positive
+    reconciliation_required: true
+    expected_contract: source row loss propagates to canonical behavior and stream fallback
+    tuning_candidates:
+      - measurement_realism completeness delta sensitivity
+      - completeness vs coupon attribution semantic boundary refinement
+
+  behavior_only_anomaly:
+    behavior_rows: positive
+    transaction_rows: zero
+    state_rows: zero
+    reconciliation_required: true
+    expected_contract: behavior-only source contract
+
+  transaction_missing_anomaly:
+    behavior_rows: positive
+    transaction_rows: positive_partial
+    state_rows: positive_or_partial
+    reconciliation_required: true
+    behavior_transaction_match_rate_lt: 0.80
+    alternative_evidence:
+      - behavior_only_count_positive
+      - transaction_only_count_positive
+    expected_contract: partial transaction missing or behavior-transaction reconciliation degradation
+    semantic_tuning_candidates:
+      - Transaction Consistency Risk
+      - Behavior-Transaction Reconciliation Gap
+      - Integrity / Consistency semantic boundary refinement
+
+  state_missing_anomaly:
+    behavior_rows: positive
+    transaction_rows: positive
+    state_rows: zero_or_partial
+    reconciliation_required: true
+    transaction_state_match_rate_lt: 0.80
+    alternative_evidence:
+      - transaction_without_state_count_positive
+    expected_contract: state missing or transaction-state reconciliation degradation

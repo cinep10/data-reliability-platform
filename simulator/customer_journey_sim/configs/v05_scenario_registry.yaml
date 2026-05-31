@@ -1,0 +1,218 @@
+scenarios:
+  baseline:
+    family: journey_native
+    source_generation_scenario: baseline
+    use_exogenous: false
+    runtime_apply: false
+    expected_risk_family: low
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  behavior_only_anomaly:
+    family: journey_native
+    source_generation_scenario: behavior_only_anomaly
+    use_exogenous: false
+    runtime_apply: false
+    expected_risk_family: behavior_transaction_consistency
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  transaction_missing_anomaly:
+    family: journey_native
+    source_generation_scenario: transaction_missing_anomaly
+    use_exogenous: false
+    runtime_apply: false
+    expected_risk_family: behavior_transaction_consistency
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  state_missing_anomaly:
+    family: journey_native
+    source_generation_scenario: state_missing_anomaly
+    use_exogenous: false
+    runtime_apply: false
+    expected_risk_family: transaction_state_integrity
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  duplicate_payment_or_order:
+    family: journey_native
+    source_generation_scenario: duplicate_payment_or_order
+    use_exogenous: false
+    runtime_apply: false
+    expected_risk_family: duplicate_reconciliation
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  coupon_state_mismatch:
+    family: journey_native
+    source_generation_scenario: coupon_state_mismatch
+    use_exogenous: false
+    runtime_apply: false
+    expected_risk_family: coupon_attribution
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  delivery_delayed_but_status_normal:
+    family: journey_native
+    source_generation_scenario: delivery_delayed_but_status_normal
+    use_exogenous: false
+    runtime_apply: false
+    expected_risk_family: delivery_timeliness
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  refund_cancel_state_mismatch:
+    family: journey_native
+    source_generation_scenario: refund_cancel_state_mismatch
+    use_exogenous: false
+    runtime_apply: false
+    expected_risk_family: refund_reconciliation
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  batch_asset_anomaly:
+    family: runtime_source_anomaly
+    source_generation_scenario: baseline
+    use_exogenous: false
+    runtime_apply: true
+    runtime_apply_mode: batch_asset_anomaly
+    expected_risk_family: batch_distribution
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  batch_stream_anomaly:
+    family: runtime_source_anomaly
+    source_generation_scenario: baseline
+    use_exogenous: false
+    runtime_apply: true
+    runtime_apply_mode: batch_stream_anomaly
+    expected_risk_family: timeliness
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  batch_stream_operational_anomaly:
+    family: runtime_source_anomaly
+    source_generation_scenario: baseline
+    use_exogenous: false
+    runtime_apply: true
+    runtime_apply_mode: batch_stream_operational_anomaly
+    expected_risk_family: availability
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  source_campaign_spike:
+    family: exogenous_source
+    source_generation_scenario: baseline
+    use_exogenous: true
+    exogenous_scenario_id: source_campaign_spike
+    runtime_apply: true
+    runtime_apply_mode: source_campaign_spike
+    expected_risk_family: capacity_volume
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  source_weather_drop:
+    family: exogenous_source
+    source_generation_scenario: baseline
+    use_exogenous: true
+    exogenous_scenario_id: source_weather_drop
+    runtime_apply: true
+    runtime_apply_mode: source_weather_drop
+    expected_risk_family: volume_conversion_context
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  source_system_degraded:
+    family: exogenous_source
+    source_generation_scenario: baseline
+    use_exogenous: true
+    exogenous_scenario_id: source_system_degraded
+    runtime_apply: true
+    runtime_apply_mode: source_system_degraded
+    expected_risk_family: latency_performance
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  source_partial_missing:
+    family: exogenous_source
+    source_generation_scenario: baseline
+    use_exogenous: true
+    exogenous_scenario_id: source_partial_missing
+    runtime_apply: true
+    runtime_apply_mode: source_partial_missing
+    expected_risk_family: completeness
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  source_latency_degradation:
+    family: exogenous_source
+    source_generation_scenario: baseline
+    use_exogenous: true
+    exogenous_scenario_id: source_latency_degradation
+    runtime_apply: true
+    runtime_apply_mode: source_latency_degradation
+    expected_risk_family: timeliness
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  source_identity_drift:
+    family: exogenous_source
+    source_generation_scenario: baseline
+    use_exogenous: true
+    exogenous_scenario_id: source_identity_drift
+    runtime_apply: true
+    runtime_apply_mode: source_identity_drift
+    expected_risk_family: identity_mapping
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  source_schema_drift:
+    family: exogenous_source
+    source_generation_scenario: baseline
+    use_exogenous: true
+    exogenous_scenario_id: source_schema_drift
+    runtime_apply: true
+    runtime_apply_mode: source_schema_drift
+    expected_risk_family: schema_validation
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  source_wc_collection_missing:
+    scenario_family: source_observability_anomaly
+    source_generation_scenario: baseline
+    use_exogenous_scenario: false
+    apply_source_runtime_anomaly: false
+    source_runtime_mode: wc_collection_missing
+    expected_risk_family: observability_completeness
+    baseline_mode: same_run_evidence_baseline
+    wc_missing_base_rate: 0.18
+    wc_missing_checkout_rate: 0.35
+    wc_missing_product_rate: 0.22
+    wc_missing_ios_safari_rate: 0.4
+    expected_semantic:
+    - WC Collection Completeness Risk
+    - Operational Observability Distortion
+    expected_action:
+    - wc collector validation
+    - web-wc reconciliation check
+    - observability KPI annotation
+    calibration_mode: review

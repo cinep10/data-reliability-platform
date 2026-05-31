@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+import argparse
+import pymysql
+
+DIM_CANDIDATES = {
+    'event_name': ['event_name','event_type','evt'],
+    'page_type': ['page_type'],
+    'device_type': ['device_type'],
+    'funnel_stage': ['funnel_stage'],
+}
+HOUR_SOURCES = ['canonical_events','stg_event_batch','stg_wc_log_hit','stg_webserver_log_hit']
+
+
+def parse_args():
+    p=argparse.ArgumentParser(description='Build current behavior distribution including hour dimension and optional baseline comparison.')
+    p.add_argument('--db-host',default='127.0.0.1'); p.add_argument('--db-port',type=int,default=3306)
+    p.add_argument('--db-user',required=True); p.add_argument('--db-pass',default=''); p.add_argument('--db-name',required=True)
+    p.add_argument('--profile-id',required=True); p.add_argument('--dt',required=True); p.add_argument('--run-id',type=int,required=True)
+    p.add_argument('--source-gen-run-id',type=int,required=True); p.add_argument('--scenario-name',required=True)
+    p.add_argument('--input-dir',default=''); p.add_argument('--baseline-mode',default='temporal_baseline'); p.add_argument('--baseline-window',default='30d')
+    p.add_argument('--write-baseline-comparison',action='store_true')
+    return p.parse_args()
+
+def conn(a):
+    return pymysql.connect(host=a.db_host,port=a.db_port,user=a.db_user,password=a.db_pass,database=a.db_name,charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor,autocommit=False)
+
+def cols(cur,t):
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name=%s",(t,)); return {r['column_name'] for r in cur.fetchall()}
+
+def table_exists(cur,t):
+    cur.execute("SELECT COUNT(*) c FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=%s",(t,)); return int(cur.fetchone()['c'] or 0)>0
+
+def pick(cc, choices):
+    for c in choices:
+        if c in cc: return c
+    return None
+
+def qcol(col): return '`'+col.replace('`','')+'`'
+
+def base_where(cc,a,date_col):
+    where=f"profile_id=%s AND {date_col}=%s"; params=[a.profile_id,a.dt]
+    if 'run_id' in cc:
+        where += ' AND run_id=%s'; params.append(a.run_id)
+    if 'source_gen_run_id' in cc:
+        where += ' AND source_gen_run_id=%s'; params.append(a.source_gen_run_id)
+    if 'scenario_name' in cc:
+        where += ' AND scenario_name=%s'; params.append(a.scenario_name)
+    return where, params
+
+def insert_schema_aware(cur, table, ordered_cols, rows):
+    if not rows or not table_exists(cur,table): return 0
+    cc=cols(cur,table)
+    actual=[c for c in ordered_cols if c in cc]
+    if not actual: return 0
+    idx=[ordered_cols.index(c) for c in actual]
+    vals=[tuple(r[i] for i in idx) for r in rows]
+    cur.executemany(f"INSERT INTO {table} ({','.join(actual)}) VALUES ({','.join(['%s']*len(actual))})", vals)
+    return len(vals)
+
+def source_for_dim(cur, dim):
+    if dim == 'hour':
+        for source in HOUR_SOURCES:
+            if not table_exists(cur,source): continue
+            cc=cols(cur,source)
+            if pick(cc,['ts','event_ts','timestamp']): return source
+        return None
+    return 'canonical_events' if table_exists(cur,'canonical_events') else ('stg_event_batch' if table_exists(cur,'stg_event_batch') else None)
+
+def build_dim(cur,a,dim,choices=None):
+    source=source_for_dim(cur,dim)
+    if not source: return [],0,None
+    cc=cols(cur,source)
+    date_col='target_date' if 'target_date' in cc else 'dt'
+    where,params=base_where(cc,a,date_col)
+    cur.execute(f"SELECT COUNT(*) c FROM {source} WHERE {where}",params); total=int(cur.fetchone()['c'] or 0)
+    if dim == 'hour':
+        ts_col=pick(cc,['ts','event_ts','timestamp'])
+        if not ts_col: return [],total,source
+        expr=f"LPAD(HOUR({qcol(ts_col)}),2,'0')"
+    else:
+        col=pick(cc,choices or [])
+        if not col: return [],total,source
+        expr=f"COALESCE(NULLIF({qcol(col)},''),'unknown')"
+    cur.execute(f"SELECT {expr} v, COUNT(*) c FROM {source} WHERE {where} GROUP BY {expr}",params)
+    rows=[]
+    for r in cur.fetchall():
+        cnt=int(r['c'] or 0); ratio=(cnt/total) if total>0 else 0.0
+        rows.append((a.profile_id,a.dt,a.run_id,a.source_gen_run_id,a.scenario_name,dim,str(r['v']),cnt,ratio,total,ratio,source))
+    return rows,total,source
+
+def build_current(cur,a):
+    rows=[]; source_total=0; sources=[]
+    for dim, choices in DIM_CANDIDATES.items():
+        rr,total,src=build_dim(cur,a,dim,choices); rows.extend(rr); source_total=max(source_total,total); sources.append(f"{dim}:{src or 'none'}")
+    rr,total,src=build_dim(cur,a,'hour',[]); rows.extend(rr); source_total=max(source_total,total); sources.append(f"hour:{src or 'none'}")
+    cur.execute("DELETE FROM batch_behavior_distribution_day WHERE profile_id=%s AND dt=%s AND run_id=%s",(a.profile_id,a.dt,a.run_id))
+    ordered=['profile_id','dt','run_id','source_gen_run_id','scenario_name','dimension_name','dimension_value','event_count','event_ratio','total_event_count','ratio_value','source_table']
+    insert_schema_aware(cur,'batch_behavior_distribution_day',ordered,rows)
+    return [(r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8]) for r in rows], source_total, sources
+
+def baseline_row(cur,a,dim,val):
+    if not table_exists(cur,'v05_baseline_distribution_snapshot_day'): return None
+    bc=cols(cur,'v05_baseline_distribution_snapshot_day')
+    def sel(c,alias): return f"{c} AS {alias}" if c in bc else f"NULL AS {alias}"
+    select=[sel('baseline_count_avg','baseline_count_avg'),sel('baseline_ratio_avg','baseline_ratio_avg'),sel('baseline_ratio_std','baseline_ratio_std')]
+    cur.execute(f"""SELECT {','.join(select)} FROM v05_baseline_distribution_snapshot_day
+                   WHERE profile_id=%s AND target_date=%s AND baseline_window=%s AND dimension_name=%s AND dimension_value=%s
+                   ORDER BY created_at DESC LIMIT 1""",(a.profile_id,a.dt,a.baseline_window,dim,val))
+    return cur.fetchone()
+
+def build_compare(cur,a,rows):
+    target='v05_batch_behavior_distribution_compare_day'
+    if not table_exists(cur,target): return []
+    cur.execute(f"DELETE FROM {target} WHERE profile_id=%s AND dt=%s AND run_id=%s",(a.profile_id,a.dt,a.run_id))
+    out=[]
+    for prof,dt,run,sg,scn,dim,val,cnt,ratio in rows:
+        b=baseline_row(cur,a,dim,val)
+        if b and b.get('baseline_ratio_avg') is not None:
+            br=float(b.get('baseline_ratio_avg') or 0); bs=float(b.get('baseline_ratio_std') or 0); bc=b.get('baseline_count_avg')
+            delta=abs(float(ratio)-br); z=delta/max(bs,1e-9) if bs>0 else 0.0
+            score=min(1.0, max(delta/0.20, z/5.0)); status='baseline_available'
+        elif a.scenario_name == 'baseline':
+            bc=cnt; br=float(ratio); bs=0.0; delta=0.0; z=0.0; score=0.0; status='BASELINE_SELF_REFERENCE'
+        else:
+            bc=None; br=None; bs=None; delta=None; z=None; score=0.0; status='BASELINE_MISSING_REVIEW'
+        out.append((prof,dt,run,sg,scn,a.baseline_mode,a.baseline_window,dim,val,cnt,ratio,bc,br,bs,delta,z,score,status))
+    ordered=['profile_id','dt','run_id','source_gen_run_id','scenario_name','baseline_mode','baseline_window','dimension_name','dimension_value','current_count','current_ratio','baseline_count_avg','baseline_ratio_avg','baseline_ratio_std','ratio_delta','z_score','distribution_shift_score','baseline_status']
+    insert_schema_aware(cur,target,ordered,out)
+    return out
+
+def main():
+    a=parse_args(); c=conn(a)
+    try:
+        with c.cursor() as cur:
+            rows,total,sources=build_current(cur,a)
+            comp=[]
+            if a.write_baseline_comparison:
+                comp=build_compare(cur,a,rows)
+        c.commit()
+        dims=','.join(sorted({r[5] for r in rows}))
+        print(f"[OK] build_v05_batch_behavior_distribution_day rows={len(rows)} events={total} dims={dims} sources={';'.join(sources)} baseline_compare={bool(a.write_baseline_comparison)} compare_rows={len(comp)}")
+    except Exception:
+        c.rollback(); raise
+    finally:
+        c.close()
+if __name__=='__main__': main()

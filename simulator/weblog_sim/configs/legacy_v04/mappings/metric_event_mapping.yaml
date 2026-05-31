@@ -1,0 +1,82 @@
+version: 1
+updated_at: 2026-03-16
+source: collector_event
+mappings:
+  - event_name: login_success
+    metric_name: login_success_count
+    metric_group: user_activity
+    aggregation: count
+  - event_name: page_view
+    metric_name: page_view_count
+    metric_group: user_activity
+    aggregation: count
+  - event_name: session_duration_sec
+    metric_name: avg_session_duration_sec
+    metric_group: user_activity
+    aggregation: avg
+    value_column: session_duration_sec
+  - event_name: auth_attempt
+    metric_name: auth_attempt_count
+    metric_group: auth_security
+    aggregation: count
+  - event_name: auth_success
+    metric_name: auth_success_count
+    metric_group: auth_security
+    aggregation: count
+  - event_name: auth_fail
+    metric_name: auth_fail_count
+    metric_group: auth_security
+    aggregation: count
+  - event_name: otp_request
+    metric_name: otp_request_count
+    metric_group: auth_security
+    aggregation: count
+  - event_name: risk_login
+    metric_name: risk_login_count
+    metric_group: auth_security
+    aggregation: count
+  - event_name: loan_view
+    metric_name: loan_view_count
+    metric_group: financial_service
+    aggregation: count
+  - event_name: loan_apply_start
+    metric_name: loan_apply_start_count
+    metric_group: financial_service
+    aggregation: count
+  - event_name: loan_apply_submit
+    metric_name: loan_apply_submit_count
+    metric_group: financial_service
+    aggregation: count
+  - event_name: card_apply_start
+    metric_name: card_apply_start_count
+    metric_group: financial_service
+    aggregation: count
+  - event_name: card_apply_submit
+    metric_name: card_apply_submit_count
+    metric_group: financial_service
+    aggregation: count
+rules:
+  new_user_ratio:
+    lookback_days: 30
+    user_id_column: user_id
+    event_time_column: event_time
+  derived_metrics:
+    - metric_name: auth_success_rate
+      formula: auth_success_count / auth_attempt_count
+      numerator: auth_success_count
+      denominator: auth_attempt_count
+    - metric_name: auth_fail_rate
+      formula: auth_fail_count / auth_attempt_count
+      numerator: auth_fail_count
+      denominator: auth_attempt_count
+    - metric_name: card_apply_submit_rate
+      formula: card_apply_submit_count / card_apply_start_count
+      numerator: card_apply_submit_count
+      denominator: card_apply_start_count
+  system_metrics:
+    raw_event_count:
+      source_table: stg_webserver_log_hit
+    collector_event_count:
+      source_table: collector_event
+    estimated_missing_rate:
+      formula: greatest(raw_event_count - collector_event_count, 0) / nullif(raw_event_count, 0)

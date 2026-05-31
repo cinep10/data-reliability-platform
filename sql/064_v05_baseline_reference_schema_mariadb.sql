@@ -1,0 +1,38 @@
+CREATE TABLE IF NOT EXISTS v05_baseline_metric_snapshot_day (
+  baseline_snapshot_id BIGINT NOT NULL AUTO_INCREMENT,
+  profile_id VARCHAR(96) NOT NULL,
+  target_date DATE NOT NULL,
+  baseline_window VARCHAR(24) NOT NULL DEFAULT '30d',
+  baseline_type VARCHAR(48) NOT NULL DEFAULT 'calendar_baseline',
+  metric_scope VARCHAR(96) NOT NULL,
+  metric_name VARCHAR(128) NOT NULL,
+  dimension_key VARCHAR(96) NOT NULL DEFAULT 'all',
+  dimension_value VARCHAR(191) NOT NULL DEFAULT 'all',
+  metric_value_avg DOUBLE DEFAULT NULL,
+  metric_value_std DOUBLE DEFAULT NULL,
+  metric_value_p50 DOUBLE DEFAULT NULL,
+  metric_value_p95 DOUBLE DEFAULT NULL,
+  metric_value_p99 DOUBLE DEFAULT NULL,
+  sample_days INT DEFAULT 0,
+  source_scenario VARCHAR(96) DEFAULT 'baseline',
+  source_table VARCHAR(128) DEFAULT NULL,
+  source_note VARCHAR(512) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(baseline_snapshot_id),
+  KEY ix_v05_baseline_metric_lookup(profile_id,target_date,baseline_window,metric_scope,metric_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS v05_baseline_reference_run_day (
+  baseline_reference_id BIGINT NOT NULL AUTO_INCREMENT,
+  profile_id VARCHAR(96) NOT NULL,
+  target_date DATE NOT NULL,
+  scenario_name VARCHAR(128) NOT NULL,
+  baseline_mode VARCHAR(48) NOT NULL DEFAULT 'temporal_baseline',
+  baseline_window VARCHAR(24) NOT NULL DEFAULT '30d',
+  baseline_available TINYINT DEFAULT 0,
+  baseline_snapshot_date DATE DEFAULT NULL,
+  fallback_policy VARCHAR(96) DEFAULT NULL,
+  analysis_confidence VARCHAR(32) DEFAULT 'unknown',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(baseline_reference_id),
+  UNIQUE KEY uq_v05_baseline_ref(profile_id,target_date,scenario_name,baseline_mode,baseline_window)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

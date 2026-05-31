@@ -1,0 +1,85 @@
+-- v0.5 Observability Measurement schema compatibility fix
+-- Purpose:
+-- 1) Keep existing v05_observability_measurement_day data.
+-- 2) Add native semantic/risk signal columns expected by reconciliation view and R chain.
+-- 3) Keep both canonical_gap_* and web_to_canonical_gap_* names for compatibility.
+
+CREATE TABLE IF NOT EXISTS v05_observability_measurement_day (
+  profile_id VARCHAR(64) NOT NULL,
+  target_date DATE NOT NULL,
+  scenario_name VARCHAR(128) NOT NULL,
+  run_id BIGINT NOT NULL,
+  source_gen_run_id BIGINT NOT NULL,
+  baseline_mode VARCHAR(64) NOT NULL DEFAULT 'same_run_evidence_baseline',
+  delta_source_type VARCHAR(64) NOT NULL DEFAULT 'DIRECT_OBSERVABILITY_MEASUREMENT',
+  web_hits BIGINT NOT NULL DEFAULT 0,
+  wc_hits BIGINT NOT NULL DEFAULT 0,
+  canonical_behavior_events BIGINT NOT NULL DEFAULT 0,
+  collection_gap_count BIGINT NOT NULL DEFAULT 0,
+  collection_gap_rate DECIMAL(18,10) NOT NULL DEFAULT 0,
+  canonical_gap_count BIGINT NOT NULL DEFAULT 0,
+  canonical_gap_rate DECIMAL(18,10) NOT NULL DEFAULT 0,
+  web_uv_ip BIGINT NOT NULL DEFAULT 0,
+  wc_uv_pcid BIGINT NOT NULL DEFAULT 0,
+  uv_gap_rate DECIMAL(18,10) NOT NULL DEFAULT 0,
+  web_checkout_hits BIGINT NOT NULL DEFAULT 0,
+  wc_checkout_hits BIGINT NOT NULL DEFAULT 0,
+  checkout_missing_rate DECIMAL(18,10) NOT NULL DEFAULT 0,
+  web_product_hits BIGINT NOT NULL DEFAULT 0,
+  wc_product_hits BIGINT NOT NULL DEFAULT 0,
+  product_missing_rate DECIMAL(18,10) NOT NULL DEFAULT 0,
+  web_payment_hits BIGINT NOT NULL DEFAULT 0,
+  wc_payment_hits BIGINT NOT NULL DEFAULT 0,
+  payment_missing_rate DECIMAL(18,10) NOT NULL DEFAULT 0,
+  top_missing_stage VARCHAR(128) DEFAULT NULL,
+  suspected_root_cause VARCHAR(255) DEFAULT NULL,
+  detail_json LONGTEXT DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY(profile_id,target_date,scenario_name,run_id,source_gen_run_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- MariaDB-compatible idempotent ALTERs using dynamic SQL.
+SET @db := DATABASE();
+
+SET @sql := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=@db AND table_name='v05_observability_measurement_day' AND column_name='web_to_canonical_gap_count')=0,
+  'ALTER TABLE v05_observability_measurement_day ADD COLUMN web_to_canonical_gap_count BIGINT NOT NULL DEFAULT 0 AFTER updated_at',
+  'SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=@db AND table_name='v05_observability_measurement_day' AND column_name='web_to_canonical_gap_rate')=0,
+  'ALTER TABLE v05_observability_measurement_day ADD COLUMN web_to_canonical_gap_rate DECIMAL(18,10) NOT NULL DEFAULT 0 AFTER web_to_canonical_gap_count',
+  'SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=@db AND table_name='v05_observability_measurement_day' AND column_name='observability_signal_score')=0,
+  'ALTER TABLE v05_observability_measurement_day ADD COLUMN observability_signal_score DECIMAL(18,10) NOT NULL DEFAULT 0 AFTER web_to_canonical_gap_rate',
+  'SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=@db AND table_name='v05_observability_measurement_day' AND column_name='observability_risk_level')=0,
+  'ALTER TABLE v05_observability_measurement_day ADD COLUMN observability_risk_level VARCHAR(32) NOT NULL DEFAULT ''low'' AFTER observability_signal_score',
+  'SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=@db AND table_name='v05_observability_measurement_day' AND column_name='recommended_semantic_risk')=0,
+  'ALTER TABLE v05_observability_measurement_day ADD COLUMN recommended_semantic_risk VARCHAR(128) DEFAULT NULL AFTER observability_risk_level',
+  'SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=@db AND table_name='v05_observability_measurement_day' AND column_name='dominant_observability_signal')=0,
+  'ALTER TABLE v05_observability_measurement_day ADD COLUMN dominant_observability_signal VARCHAR(128) DEFAULT NULL AFTER recommended_semantic_risk',
+  'SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Backfill compatibility values for existing rows.
+UPDATE v05_observability_measurement_day
+SET web_to_canonical_gap_count = CASE WHEN COALESCE(web_to_canonical_gap_count,0)=0 THEN COALESCE(canonical_gap_count,0) ELSE web_to_canonical_gap_count END,
+    web_to_canonical_gap_rate = CASE WHEN COALESCE(web_to_canonical_gap_rate,0)=0 THEN COALESCE(canonical_gap_rate,0) ELSE web_to_canonical_gap_rate END,
+    observability_signal_score = CASE
+      WHEN COALESCE(observability_signal_score,0)=0 THEN LEAST(1.0, GREATEST(COALESCE(collection_gap_rate,0), COALESCE(canonical_gap_rate,0), COALESCE(web_to_canonical_gap_rate,0)) * 3.89)
+      ELSE observability_signal_score END,
+    observability_risk_level = CASE
+      WHEN COALESCE(observability_signal_score,0) >= 0.70 OR COALESCE(collection_gap_rate,0) >= 0.15 THEN 'high'
+      WHEN COALESCE(observability_signal_score,0) >= 0.40 OR COALESCE(collection_gap_rate,0) >= 0.08 THEN 'warning'
+      ELSE COALESCE(NULLIF(observability_risk_level,''),'low') END,
+    recommended_semantic_risk = CASE
+      WHEN COALESCE(collection_gap_rate,0) >= 0.08 THEN 'WC Collection Completeness Risk'
+      ELSE recommended_semantic_risk END,
+    dominant_observability_signal = CASE
+      WHEN COALESCE(collection_gap_rate,0) >= COALESCE(canonical_gap_rate,0) THEN 'web_wc_collection_gap'
+      ELSE 'canonical_observability_gap' END;

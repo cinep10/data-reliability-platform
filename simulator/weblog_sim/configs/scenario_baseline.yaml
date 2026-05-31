@@ -1,0 +1,7 @@
+scenario_name: baseline
+scenario_mode: baseline
+runtime_mode: replay
+source_mode: simulator_file_generate
+traffic:
+  avg_rps: 1.0
+  seed: 42

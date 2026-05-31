@@ -1,0 +1,2 @@
+[console_scripts]
+weblog-sim = weblog_sim.cli:main

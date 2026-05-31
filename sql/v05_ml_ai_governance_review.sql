@@ -1,0 +1,6 @@
+-- v0.5 ML/AI governance review SQL
+SELECT target_date, scenario_name, model_source, predicted_risk_class, ROUND(predicted_risk_score,6) predicted_risk_score, ROUND(score_gap,6) score_gap, prediction_status FROM v05_ml_prediction_day WHERE profile_id='commerce_deliver' ORDER BY target_date DESC, id DESC LIMIT 30;
+SELECT target_date, scenario_name, verification_status, verification_reason FROM v05_ml_output_verification_day WHERE profile_id='commerce_deliver' ORDER BY target_date DESC, id DESC LIMIT 30;
+SELECT target_date, scenario_name, feature_name, ROUND(feature_value,6) feature_value, ROUND(z_score,6) z_score, drift_flag, ROUND(importance_score,6) importance_score, diagnostic_status FROM v05_ml_feature_diagnostics_day WHERE profile_id='commerce_deliver' ORDER BY target_date DESC, ABS(COALESCE(z_score,0)) DESC LIMIT 50;
+SELECT target_date, scenario_name, validation_type, validation_status, issue_count, validation_reason FROM v05_ai_validation_detail_day WHERE profile_id='commerce_deliver' ORDER BY target_date DESC, id DESC LIMIT 50;
+SELECT target_date, scenario_name, provider, model_name, api_status, fallback_used, governance_status FROM v05_llm_execution_log_day WHERE profile_id='commerce_deliver' ORDER BY target_date DESC, id DESC LIMIT 30;

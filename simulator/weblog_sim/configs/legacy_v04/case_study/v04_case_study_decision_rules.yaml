@@ -1,0 +1,55 @@
+# v0.4 Case Study decision adapter rules.
+# The source alias adapter keeps existing v0.4 cookie keys intact.
+# This decision adapter maps case-study evidence already present in canonical_events
+# into Phase3 semantic/risk/action tables without modifying raw/canonical data.
+
+CASE-OFFER-001:
+  scenario_name: source_offer_schema_drift_realtime_missing
+  evidence:
+    scenario_id: CASE-OFFER-001
+    schema_flag: drift
+    reconciliation_flag: offer_delivery_missing
+    funnel_stage: offer
+    financial_product: loan
+  target:
+    dominant_semantic_risk: Integrity
+    secondary_semantic_risk: Completeness
+    final_risk_level: HIGH
+    recommended_action: offer event schema reconciliation
+    priority: P1
+    root_cause_direction: offer schema drift and realtime delivery missing
+  scores:
+    integrity_score_min: 0.65
+    completeness_score_min: 0.30
+    timeliness_score_min: 0.10
+    consistency_score_min: 0.55
+    semantic_confidence_min: 0.65
+    base_risk_score: 0.55
+    amplification_weight: 0.15
+    distortion_penalty: 0.20
+    baseline_delta_penalty: 0.10
+
+CASE-REC-002:
+  scenario_name: source_recommendation_schema_drift_false_conversion
+  evidence:
+    scenario_id: CASE-REC-002
+    schema_flag: drift
+    reconciliation_flag: kpi_semantic_mismatch
+    funnel_stage: recommendation
+  target:
+    dominant_semantic_risk: Integrity
+    secondary_semantic_risk: Consistency
+    final_risk_level: HIGH
+    recommended_action: recommendation KPI semantic mapping validation
+    priority: P1
+    root_cause_direction: recommendation schema drift and KPI semantic mismatch
+  scores:
+    integrity_score_min: 0.65
+    completeness_score_min: 0.00
+    timeliness_score_min: 0.00
+    consistency_score_min: 0.65
+    semantic_confidence_min: 0.65
+    base_risk_score: 0.55
+    amplification_weight: 0.10
+    distortion_penalty: 0.25
+    baseline_delta_penalty: 0.10

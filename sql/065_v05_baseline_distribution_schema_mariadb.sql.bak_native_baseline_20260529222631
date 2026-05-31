@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS v05_baseline_distribution_snapshot_day (
+  baseline_distribution_id BIGINT NOT NULL AUTO_INCREMENT,
+  profile_id VARCHAR(64) NOT NULL,
+  target_date DATE NOT NULL,
+  baseline_window VARCHAR(16) NOT NULL DEFAULT '30d',
+  baseline_type VARCHAR(48) NOT NULL DEFAULT 'calendar_baseline',
+  source_scenario VARCHAR(128) NOT NULL DEFAULT 'baseline',
+  dimension_name VARCHAR(96) NOT NULL,
+  dimension_value VARCHAR(191) NOT NULL,
+  baseline_count_avg DOUBLE DEFAULT NULL,
+  baseline_count_std DOUBLE DEFAULT NULL,
+  baseline_ratio_avg DOUBLE DEFAULT NULL,
+  baseline_ratio_std DOUBLE DEFAULT NULL,
+  baseline_ratio_p50 DOUBLE DEFAULT NULL,
+  baseline_ratio_p95 DOUBLE DEFAULT NULL,
+  sample_days INT DEFAULT 0,
+  source_table VARCHAR(128) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(baseline_distribution_id),
+  UNIQUE KEY uk_v05_baseline_dist(profile_id,target_date,baseline_window,baseline_type,source_scenario,dimension_name,dimension_value)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

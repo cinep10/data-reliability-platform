@@ -1,0 +1,24 @@
+CREATE TABLE IF NOT EXISTS r_v05_observability_analysis_day (
+  profile_id VARCHAR(96) NOT NULL,
+  target_date DATE NOT NULL,
+  run_id BIGINT NOT NULL,
+  source_gen_run_id BIGINT DEFAULT NULL,
+  scenario_name VARCHAR(128) NOT NULL,
+  collection_completeness_score DOUBLE DEFAULT 0,
+  canonical_observability_gap_score DOUBLE DEFAULT 0,
+  uv_gap_score DOUBLE DEFAULT 0,
+  stage_distortion_score DOUBLE DEFAULT 0,
+  observability_overall_score DOUBLE DEFAULT 0,
+  observability_risk_level VARCHAR(32) DEFAULT 'low',
+  dominant_observability_signal VARCHAR(128) DEFAULT 'none',
+  recommended_semantic_risk VARCHAR(128) DEFAULT 'None',
+  analysis_status VARCHAR(64) DEFAULT 'PASS',
+  analysis_reason VARCHAR(1024) DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (profile_id,target_date,run_id,scenario_name),
+  KEY idx_obs_analysis_lookup (profile_id,target_date,scenario_name,run_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE semantic_interpretation_day_v05
+  ADD COLUMN IF NOT EXISTS observability_semantic_score DOUBLE NULL,
+  ADD COLUMN IF NOT EXISTS dominant_observability_signal VARCHAR(128) NULL;

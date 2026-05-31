@@ -1,0 +1,131 @@
+suppressWarnings({library(DBI); library(RMariaDB); library(jsonlite)})
+args <- commandArgs(trailingOnly=TRUE)
+get_arg <- function(name, default=NULL) { i <- match(name, args); if (!is.na(i) && i < length(args)) args[[i+1]] else default }
+profile_id <- get_arg('--profile-id'); target_date <- get_arg('--target-date'); run_id <- as.integer(get_arg('--run-id'))
+source_gen_run_id <- get_arg('--source-gen-run-id'); scenario_name <- get_arg('--scenario-name','baseline')
+con <- dbConnect(RMariaDB::MariaDB(), host=get_arg('--db-host'), port=as.integer(get_arg('--db-port','3306')), user=get_arg('--db-user'), password=get_arg('--db-pass'), dbname=get_arg('--db-name'))
+on.exit(dbDisconnect(con), add=TRUE)
+where <- 'profile_id=? AND target_date=? AND run_id=?'; params <- list(profile_id, target_date, run_id)
+if (!is.null(source_gen_run_id) && nzchar(source_gen_run_id)) { where <- paste(where, 'AND source_gen_run_id=?'); params <- c(params, list(as.integer(source_gen_run_id))) }
+
+table_exists <- function(table_name) {
+  res <- dbGetQuery(con, 'SELECT COUNT(*) AS cnt FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?', params=list(table_name))
+  as.numeric(res$cnt[[1]]) > 0
+}
+table_columns <- function(table_name) {
+  if (!table_exists(table_name)) return(character())
+  res <- dbGetQuery(con, 'SELECT column_name FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name=?', params=list(table_name))
+  as.character(res$column_name)
+}
+ensure_column <- function(table_name, column_name, ddl_type) {
+  cols <- table_columns(table_name)
+  if (!(column_name %in% cols)) {
+    dbExecute(con, sprintf('ALTER TABLE `%s` ADD COLUMN `%s` %s', table_name, column_name, ddl_type))
+    cat(sprintf('[SCHEMA] added %s.%s\n', table_name, column_name))
+  }
+}
+
+if (table_exists('unified_reliability_score_day_v05')) {
+  ensure_column('unified_reliability_score_day_v05', 'runtime_evidence_weight', 'DOUBLE NULL')
+  ensure_column('unified_reliability_score_day_v05', 'dominant_runtime_signal', 'VARCHAR(100) NULL')
+}
+
+a <- dbGetQuery(con, paste('SELECT * FROM reliability_analysis_result_day_v05 WHERE', where), params=params)
+s <- dbGetQuery(con, paste('SELECT * FROM semantic_interpretation_day_v05 WHERE', where), params=params)
+if (nrow(a)<1 || nrow(s)<1) stop('missing analysis or semantic row')
+a <- a[1,]; s <- s[1,]
+num <- function(x) as.numeric(ifelse(is.na(x), 0, x))
+chr <- function(x, default='none') { if (is.null(x) || length(x)<1 || is.na(x[[1]]) || !nzchar(as.character(x[[1]]))) default else as.character(x[[1]]) }
+clamp01 <- function(x) max(0, min(1, x))
+has_col <- function(df, col) col %in% names(df)
+
+semantic_base_score <- max(
+  num(s$behavior_transaction_consistency_score),
+  num(s$transaction_state_integrity_score),
+  num(s$order_lifecycle_consistency_score),
+  num(s$payment_state_reconciliation_score),
+  num(s$delivery_timeliness_score),
+  num(s$coupon_attribution_score),
+  num(s$customer_experience_score),
+  if (has_col(s, 'runtime_semantic_score')) num(s$runtime_semantic_score) * 0.75 else 0
+)
+
+runtime_evidence_score <- if (has_col(a, 'runtime_evidence_score')) num(a$runtime_evidence_score) else 0
+batch_evidence_score <- if (has_col(a, 'batch_evidence_score')) num(a$batch_evidence_score) else 0
+stream_evidence_score <- if (has_col(a, 'stream_evidence_score')) num(a$stream_evidence_score) else 0
+operational_evidence_score <- if (has_col(a, 'operational_evidence_score')) num(a$operational_evidence_score) else 0
+realism_evidence_score <- if (has_col(a, 'realism_evidence_score')) num(a$realism_evidence_score) else 0
+dominant_runtime_signal <- if (has_col(a, 'dominant_runtime_signal')) chr(a$dominant_runtime_signal) else 'none'
+
+runtime_evidence_weight <- clamp01(
+  0.35*runtime_evidence_score +
+  0.20*stream_evidence_score +
+  0.25*operational_evidence_score +
+  0.10*batch_evidence_score +
+  0.10*realism_evidence_score
+) * 0.10
+
+amplification_weight <- num(a$amplification_score) * 0.12
+distortion_penalty <- num(a$distortion_score) * 0.18
+baseline_delta_penalty <- num(a$baseline_delta) * 0.15
+reconciliation_gap_weight <- num(a$reconciliation_gap_score) * 0.20
+customer_impact_weight <- num(a$customer_impact_score) * 0.13
+transaction_loss_weight <- num(a$transaction_loss_score) * 0.17
+
+overall <- clamp01(
+  semantic_base_score*0.42 +
+  amplification_weight +
+  distortion_penalty +
+  baseline_delta_penalty +
+  reconciliation_gap_weight +
+  customer_impact_weight +
+  transaction_loss_weight +
+  runtime_evidence_weight
+)
+
+stable_gate <- 0.08
+if (s$dominant_semantic_risk == 'None' && overall < stable_gate) overall <- 0
+level <- if (overall >= 0.75) 'critical' else if (overall >= 0.55) 'high' else if (overall >= 0.30) 'warning' else if (overall >= stable_gate) 'low' else 'stable'
+payload <- toJSON(list(
+  v04_philosophy_guard=list(
+    status='PASS',
+    measurement_to_semantic_to_score=TRUE,
+    risk_not_computed_in_sql=TRUE,
+    action_not_embedded_in_score=TRUE,
+    scenario_name_used_as_risk_driver=FALSE,
+    runtime_evidence_is_supplementary=TRUE
+  ),
+  dominant_semantic_risk=s$dominant_semantic_risk,
+  stable_gate=stable_gate,
+  runtime_evidence_interface=list(
+    runtime_evidence_score=runtime_evidence_score,
+    batch_evidence_score=batch_evidence_score,
+    stream_evidence_score=stream_evidence_score,
+    operational_evidence_score=operational_evidence_score,
+    realism_evidence_score=realism_evidence_score,
+    runtime_evidence_weight=runtime_evidence_weight,
+    dominant_runtime_signal=dominant_runtime_signal
+  ),
+  component_scores=list(
+    semantic_base_score=semantic_base_score,
+    amplification_weight=amplification_weight,
+    distortion_penalty=distortion_penalty,
+    baseline_delta_penalty=baseline_delta_penalty,
+    reconciliation_gap_weight=reconciliation_gap_weight,
+    customer_impact_weight=customer_impact_weight,
+    transaction_loss_weight=transaction_loss_weight,
+    runtime_evidence_weight=runtime_evidence_weight
+  )
+), auto_unbox=TRUE)
+
+dbExecute(con, paste('DELETE FROM unified_reliability_score_day_v05 WHERE', where), params=params)
+cols <- table_columns('unified_reliability_score_day_v05')
+if ('runtime_evidence_weight' %in% cols && 'dominant_runtime_signal' %in% cols) {
+  dbExecute(con, 'INSERT INTO unified_reliability_score_day_v05(run_id,profile_id,source_gen_run_id,target_date,scenario_name,semantic_base_score,amplification_weight,distortion_penalty,baseline_delta_penalty,reconciliation_gap_weight,customer_impact_weight,transaction_loss_weight,runtime_evidence_weight,dominant_runtime_signal,overall_risk_score,final_risk_level,score_payload_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            params=list(run_id, profile_id, ifelse(is.null(source_gen_run_id)||!nzchar(source_gen_run_id), NA, as.integer(source_gen_run_id)), target_date, scenario_name, semantic_base_score, amplification_weight, distortion_penalty, baseline_delta_penalty, reconciliation_gap_weight, customer_impact_weight, transaction_loss_weight, runtime_evidence_weight, dominant_runtime_signal, overall, level, payload))
+} else {
+  dbExecute(con, 'INSERT INTO unified_reliability_score_day_v05(run_id,profile_id,source_gen_run_id,target_date,scenario_name,semantic_base_score,amplification_weight,distortion_penalty,baseline_delta_penalty,reconciliation_gap_weight,customer_impact_weight,transaction_loss_weight,overall_risk_score,final_risk_level,score_payload_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            params=list(run_id, profile_id, ifelse(is.null(source_gen_run_id)||!nzchar(source_gen_run_id), NA, as.integer(source_gen_run_id)), target_date, scenario_name, semantic_base_score, amplification_weight, distortion_penalty, baseline_delta_penalty, reconciliation_gap_weight, customer_impact_weight, transaction_loss_weight, overall, level, payload))
+}
+
+cat(sprintf('[build_v05_unified_risk_score.R] OK overall=%.6f level=%s runtime_weight=%.6f dominant_runtime=%s philosophy=PASS\n', overall, level, runtime_evidence_weight, dominant_runtime_signal))

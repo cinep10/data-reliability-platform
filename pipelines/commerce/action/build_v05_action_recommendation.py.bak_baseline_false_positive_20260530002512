@@ -1,0 +1,59 @@
+from __future__ import annotations
+import argparse,json,pymysql
+
+def parse_args():
+    p=argparse.ArgumentParser(description='Build v0.5 action recommendations from semantic/risk evidence, including native observability semantics.')
+    p.add_argument('--db-host',required=True); p.add_argument('--db-port',type=int,required=True); p.add_argument('--db-user',required=True); p.add_argument('--db-pass',required=True); p.add_argument('--db-name',required=True)
+    p.add_argument('--profile-id',required=True); p.add_argument('--target-date',required=True); p.add_argument('--run-id',type=int,required=True); p.add_argument('--source-gen-run-id',type=int); p.add_argument('--scenario-name',default='baseline')
+    p.add_argument('--truncate-target',action='store_true'); p.add_argument('--action-threshold',type=float,default=0.20); p.add_argument('--calibration-config',default='pipelines/commerce/configs/v05_semantic_action_calibration.yaml')
+    return p.parse_args()
+def conn(a): return pymysql.connect(host=a.db_host,port=a.db_port,user=a.db_user,password=a.db_pass,database=a.db_name,charset='utf8mb4',cursorclass=pymysql.cursors.DictCursor,autocommit=False)
+def where(a):
+    w='profile_id=%s AND target_date=%s AND run_id=%s'; p=[a.profile_id,a.target_date,a.run_id]
+    if a.source_gen_run_id is not None: w+=' AND source_gen_run_id=%s'; p.append(a.source_gen_run_id)
+    return w,p
+def f(row,k):
+    try: return float((row or {}).get(k) or 0)
+    except Exception: return 0.0
+def table_exists(cur,t):
+    cur.execute('SELECT COUNT(*) c FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=%s',(t,)); return int(cur.fetchone()['c'])>0
+def fetch_obs(cur,a):
+    if not table_exists(cur,'r_v05_observability_analysis_day'): return None
+    cur.execute('SELECT * FROM r_v05_observability_analysis_day WHERE profile_id=%s AND target_date=%s AND run_id=%s AND scenario_name=%s ORDER BY created_at DESC LIMIT 1',(a.profile_id,a.target_date,a.run_id,a.scenario_name))
+    return cur.fetchone()
+def main():
+    a=parse_args(); c=conn(a)
+    try:
+        with c.cursor() as cur:
+            w,p=where(a)
+            if a.truncate_target: cur.execute(f'DELETE FROM action_recommendation_day_v05 WHERE {w}',p)
+            cur.execute(f'SELECT * FROM semantic_interpretation_day_v05 WHERE {w}',p); s=cur.fetchone()
+            cur.execute(f'SELECT * FROM unified_reliability_score_day_v05 WHERE {w}',p); u=cur.fetchone()
+            if not(s and u): raise RuntimeError('missing semantic/unified rows')
+            obs=fetch_obs(cur,a)
+            overall=f(u,'overall_risk_score'); level=str(u.get('final_risk_level') or '').lower(); dominant=str(s.get('dominant_semantic_risk') or 'None')
+            is_baseline=(a.scenario_name or '').lower() in {'baseline','normal','stable'}; no_dom=dominant.lower() in {'none','','null'}; low=level in {'stable','normal','low'}
+            payload=json.dumps({'principle':'Python maps R-produced semantic/risk evidence to actions only.','dominant_semantic_risk':dominant,'overall_risk_score':overall,'observability_native':bool(obs)},ensure_ascii=False)
+            rows=[]
+            def add(rank,atype,summary,table,metric,value):
+                rows.append((a.run_id,a.profile_id,a.source_gen_run_id,a.target_date,a.scenario_name,rank,atype,summary,summary,table,metric,value,payload))
+            if is_baseline and no_dom and low:
+                add(1,'no action','no action','semantic_interpretation_day_v05','dominant_semantic_risk',overall)
+            else:
+                if dominant in {'WC Collection Completeness Risk','Operational Observability Distortion','False KPI Degradation Risk'} or (obs and f(obs,'observability_overall_score')>=a.action_threshold):
+                    score=f(obs,'observability_overall_score') if obs else f(s,'observability_semantic_score')
+                    add(1,'wc collector validation','Validate WC collector ingest path, beacon delivery, and collector-side drop/retry behavior.','r_v05_observability_analysis_day','observability_overall_score',score)
+                    add(2,'web-wc reconciliation check','Compare WebServer source hits with WC telemetry by run_id/source_gen_run_id and segment the collection gap.','v05_observability_measurement_day','collection_gap_rate',score)
+                    add(3,'observability KPI annotation','Annotate or suppress KPI dashboard decisions until collection completeness is recovered.','semantic_interpretation_day_v05','dominant_semantic_risk',score)
+                else:
+                    candidates=[('payment reconciliation check','Payment/order gap exceeded baseline-normalized threshold.','v05_reconciliation_measurement_day','payment_order_gap',0),('delivery pipeline validation','Transaction-state delay or delivery status gap exceeded baseline-normalized threshold.','v05_reconciliation_measurement_day','delivery_state_delay_ms',0),('coupon attribution audit','Coupon attribution score exceeded baseline-normalized threshold.','semantic_interpretation_day_v05','coupon_attribution_score',f(s,'coupon_attribution_score')),('customer impact investigation','Customer experience risk exceeded baseline-normalized threshold.','semantic_interpretation_day_v05','customer_experience_score',f(s,'customer_experience_score'))]
+                    candidates=[x for x in candidates if float(x[4] or 0)>=a.action_threshold]
+                    if not candidates: add(1,'no action','no action','unified_reliability_score_day_v05','overall_risk_score',overall)
+                    else:
+                        for i,(atype,summary,table,metric,value) in enumerate(candidates[:5],1): add(i,atype,summary,table,metric,value)
+            cur.executemany('INSERT INTO action_recommendation_day_v05(run_id,profile_id,source_gen_run_id,target_date,scenario_name,action_rank,action_type,recommended_action,evidence_summary,evidence_table,evidence_metric,evidence_value,action_payload_json) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',rows)
+        c.commit(); print(f'[build_v05_action_recommendation] inserted={len(rows)} action={rows[0][7] if rows else "none"}')
+    except Exception:
+        c.rollback(); raise
+    finally: c.close()
+if __name__=='__main__': main()

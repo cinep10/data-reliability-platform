@@ -1,0 +1,270 @@
+profile_id: commerce_deliver
+site_host: commerce-deliver.example.com
+domain: commerce_delivery
+timezone: Asia/Seoul
+seed: 42
+run_id: v05_phase1
+
+# v0.5 must reuse the v0.4 weblog simulator behavior assets.
+# The bridge loads the legacy finance_bank.yaml and reuses traffic curve, device/UA pools,
+# revisit/session/PV calibration, then applies commerce URL/query/cookie semantics.
+v04_behavior_asset_bridge:
+  enabled: true
+  profile_path: simulator/weblog_sim/configs/legacy_v04/profiles/finance_bank.yaml
+  use_v04_hourly_curve: true
+
+# v0.4 behavior simulator compatibility: daily user behavior should not be uniform random.
+# This profile keeps the v0.4-style hourly curve, weekday/weekend multiplier, revisit ratio,
+# mobile/desktop mix, and variable pageviews per visit, but changes pages/query/cookie semantics to commerce.
+target_daily_visits: 6446
+traffic_model:
+  enabled: true
+  # Baseline is a full-day traffic dataset. Do not use the small smoke-test count for Phase1 completion.
+  target_daily_visits: 6446
+  target_daily_uv: 3200
+  min_baseline_uv: 1000
+  repeat_ip_stickiness: 0.72
+  repeat_subnet_stickiness: 0.22
+  micro_burst_enabled: true
+  micro_burst_probability: 0.18
+  # Reference baseline pattern from the v0.4 behavior screenshot / config: low night traffic,
+  # morning ramp-up, stable daytime usage, and evening peak.
+  hourly_visit_weights: [0.01070,0.01272,0.00946,0.01210,0.01288,0.01815,0.02575,0.02886,0.04437,0.04887,0.05973,0.05880,0.04871,0.04561,0.05026,0.05290,0.05507,0.06066,0.06283,0.07121,0.06407,0.05926,0.04871,0.03832]
+  weekday_multiplier: {sun: 0.82, mon: 1.10, tue: 1.06, wed: 1.04, thu: 1.00, fri: 0.98, sat: 0.74}
+  new_visit_ratio_by_hh: [0.88,0.86,0.84,0.82,0.80,0.76,0.72,0.64,0.56,0.48,0.44,0.42,0.42,0.43,0.44,0.45,0.46,0.48,0.51,0.56,0.61,0.67,0.74,0.82]
+  revisit_ratio_by_hh: [0.12,0.14,0.16,0.18,0.20,0.24,0.28,0.36,0.44,0.52,0.56,0.58,0.58,0.57,0.56,0.55,0.54,0.52,0.49,0.44,0.39,0.33,0.26,0.18]
+  target_pv_per_visit_mean_by_hh: [2.9,3.0,3.1,3.0,3.1,3.1,3.4,3.8,4.0,4.4,4.3,4.5,4.3,4.4,4.4,4.5,4.5,4.6,4.5,4.3,3.9,3.9,3.4,3.1]
+
+session_mean_sec: 260
+customer_segments:
+  - name: new
+    weight: 0.35
+  - name: returning
+    weight: 0.45
+  - name: vip
+    weight: 0.20
+device_types:
+  - name: mobile
+    weight: 0.70
+  - name: desktop
+    weight: 0.25
+  - name: tablet
+    weight: 0.05
+products:
+  - product_id: P10001
+    category: chicken
+    base_price: 19000
+  - product_id: P10002
+    category: pizza
+    base_price: 24000
+  - product_id: P10003
+    category: burger
+    base_price: 12500
+  - product_id: P10004
+    category: korean_food
+    base_price: 13500
+  - product_id: P10005
+    category: cafe
+    base_price: 8500
+coupons:
+  - coupon_id: CPWELCOME
+    discount_amount: 3000
+    apply_rate: 0.20
+  - coupon_id: CPDELIVERY
+    discount_amount: 2000
+    apply_rate: 0.10
+journey_stages:
+  - home
+  - browse
+  - search
+  - product_view
+  - add_cart
+  - checkout
+  - payment
+  - order_complete
+  - delivery
+  - refund
+behavior_paths:
+  home: /main.do
+  browse: /category/list.do
+  search: /search/result.do
+  product_view: /product/view.do
+  add_cart: /cart/add.do
+  checkout: /checkout/start.do
+  payment: /payment/request.do
+  order_complete: /order/complete.do
+  delivery: /delivery/status.do
+  refund: /refund/request.do
+behavior_query:
+  home: ""
+  browse: category=food&journey_stage={journey_stage}
+  search: keyword=chicken&journey_stage={journey_stage}
+  product_view: product_id={product_id}&journey_stage={journey_stage}
+  add_cart: cart_id={cart_id}&product_id={product_id}&journey_stage={journey_stage}
+  checkout: cart_id={cart_id}&coupon_id={coupon_id}&journey_stage={journey_stage}
+  payment: order_id={order_id}&payment_id={payment_id}&journey_stage={journey_stage}
+  order_complete: order_id={order_id}&payment_id={payment_id}&journey_stage={journey_stage}
+  delivery: order_id={order_id}&delivery_id={delivery_id}&journey_stage={journey_stage}
+  refund: order_id={order_id}&payment_id={payment_id}&journey_stage={journey_stage}
+transaction_events:
+  payment_requested: payment
+  payment_approved: payment
+  order_created: order_complete
+  refund_completed: refund
+  coupon_applied: checkout
+state_events:
+  order_status_created: order_complete
+  delivery_status_assigned: delivery
+  delivery_status_delivered: delivery
+  refund_status_completed: refund
+anomaly_profiles:
+  baseline:
+    scenario_id: baseline
+    scenario_name: baseline
+    anomaly_type: none
+    drift: "off"
+    reconciliation_flag: none
+    description: no source anomaly
+  behavior_only_anomaly:
+    scenario_id: behavior_only_anomaly
+    scenario_name: behavior_only_anomaly
+    anomaly_type: behavior_only
+    drift: "on"
+    reconciliation_flag: transaction_state_missing
+    description: behavior is generated but transaction/state evidence is missing for selected journeys
+    transaction_drop_rate: 1.0
+    state_drop_rate: 1.0
+    target_stages: [payment, order_complete]
+  transaction_missing_anomaly:
+    scenario_id: transaction_missing_anomaly
+    scenario_name: transaction_missing_anomaly
+    anomaly_type: transaction_missing
+    drift: "on"
+    reconciliation_flag: behavior_transaction_gap
+    description: payment/order transaction events are dropped while behavior remains
+    transaction_drop_rate: 1.0
+    target_transaction_events: [payment_approved, order_created]
+  state_missing_anomaly:
+    scenario_id: state_missing_anomaly
+    scenario_name: state_missing_anomaly
+    anomaly_type: state_missing
+    drift: "on"
+    reconciliation_flag: transaction_state_gap
+    description: transaction exists but state transition evidence is missing
+    state_drop_rate: 1.0
+    target_state_events: [order_status_created, delivery_status_assigned, delivery_status_delivered]
+  coupon_state_mismatch:
+    scenario_id: coupon_state_mismatch
+    scenario_name: coupon_state_mismatch
+    anomaly_type: coupon_state_mismatch
+    drift: "on"
+    reconciliation_flag: coupon_attribution_gap
+    description: coupon behavior/transaction exists but state-level order amount evidence is distorted
+    coupon_state_mismatch_rate: 1.0
+  refund_state_mismatch:
+    scenario_id: refund_state_mismatch
+    scenario_name: refund_state_mismatch
+    anomaly_type: refund_state_mismatch
+    drift: "on"
+    reconciliation_flag: refund_state_gap
+    description: refund transaction exists but refund/order state is missing
+    state_drop_rate: 1.0
+    target_state_events: [refund_status_completed]
+
+  batch_asset_anomaly:
+    scenario_id: batch_asset_anomaly
+    scenario_name: batch_asset_anomaly
+    anomaly_type: batch_asset_distribution_distortion
+    drift: "on"
+    reconciliation_flag: batch_distribution_distortion
+    description: Source-level behavior semantic distortion for batch asset distribution/mapping reliability test. No mid-table mutation.
+    target_stages: [browse, search, product_view]
+    source_runtime_anomaly:
+      mode: batch_only
+      target_stages: [browse, search, product_view]
+      page_type_distortion_rate: 0.38
+      forced_page_type: promo_shadow
+      forced_journey_stage: promo_shadow
+      forced_referer: https://m.commerce-deliver.example.com/event/runtime-layer-test?utm_source=campaign&utm_medium=push
+
+  batch_stream_anomaly:
+    scenario_id: batch_stream_anomaly
+    scenario_name: batch_stream_anomaly
+    anomaly_type: batch_stream_source_distortion
+    drift: "on"
+    reconciliation_flag: batch_stream_source_distortion
+    description: Source-level behavior semantic distortion plus source duplicate/drop/time skew for batch and stream reliability test. No mid-table mutation.
+    target_stages: [browse, search, product_view, add_cart, checkout, payment]
+    source_runtime_anomaly:
+      mode: batch_stream
+      target_stages: [product_view, add_cart, checkout, payment]
+      page_type_distortion_rate: 0.30
+      forced_page_type: promo_shadow
+      forced_journey_stage: promo_shadow
+      source_duplicate_rate: 0.06
+      source_drop_rate: 0.02
+      event_time_skew_rate: 0.05
+      event_time_skew_seconds: 1200
+
+  batch_stream_operational_anomaly:
+    scenario_id: batch_stream_operational_anomaly
+    scenario_name: batch_stream_operational_anomaly
+    anomaly_type: batch_stream_operational_source_distortion
+    drift: "on"
+    reconciliation_flag: batch_stream_operational_source_distortion
+    description: Source-level batch distribution, stream duplicate/drop/skew, and operational latency/status/microburst reliability test. No mid-table mutation.
+    target_stages: [browse, search, product_view, add_cart, checkout, payment, order_complete]
+    source_runtime_anomaly:
+      mode: batch_stream_operational
+      target_stages: [product_view, add_cart, checkout, payment, order_complete]
+      page_type_distortion_rate: 0.28
+      forced_page_type: promo_shadow
+      forced_journey_stage: promo_shadow
+      source_duplicate_rate: 0.06
+      source_drop_rate: 0.02
+      event_time_skew_rate: 0.05
+      event_time_skew_seconds: 1200
+      http_error_rate: 0.10
+      latency_injection_rate: 0.18
+      latency_ms: 4500
+      microburst_rate: 0.05
+      microburst_minute: 730
+
+# v0.5 Phase4 baseline calibration profile
+# These values document normal commerce browsing noise used by the R semantic layer.
+# They are not risk scores and are not used by Python orchestration.
+phase4_baseline_calibration:
+  expected_behavior_only_rate: 0.75
+  expected_transaction_only_rate: 0.05
+  expected_transaction_state_unmatched_rate: 0.35
+  expected_orphan_state_rate: 0.30
+  expected_transaction_without_state_rate: 0.05
+  expected_conversion_gap: 0.20
+  expected_payment_order_gap: 0.03
+  expected_refund_transition_gap: 0.03
+  expected_coupon_without_payment_gap: 0.50
+  p95_state_delay_warn_ms: 1800000
+  semantic_gate: 0.08
+  stable_score_gate: 0.08
+
+
+# Cookie uid realism:
+# uid is an authenticated customer cookie, not a visitor/session identifier.
+identity_model:
+  uid_cookie_policy: authenticated_only
+  default_logged_in_session_rate: 0.18
+  logged_in_session_rate_by_segment:
+    new: 0.06
+    returning: 0.28
+    vip: 0.52
+  uid_exposure_stages: [checkout, payment, order_complete, delivery, refund]
+  force_uid_stages: [order_complete, delivery, refund]
+  auth_stage_probability:
+    checkout: 0.55
+    payment: 0.85
+    order_complete: 1.00
+    delivery: 1.00
+    refund: 1.00
+  expected_uid_cookie_rate_min: 0.06
+  expected_uid_cookie_rate_max: 0.55
+  expected_early_stage_uid_rate_max: 0.45

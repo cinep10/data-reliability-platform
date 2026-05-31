@@ -1,0 +1,396 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Latest Stream Risk Score",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL_UID}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT COALESCE(MAX(stream_risk_score),0) AS value FROM stream_risk_signal_day WHERE profile_id='${profile_id}' AND dt BETWEEN '${date_from}' AND '${date_to}';"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Primary Stream Issue",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL_UID}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT primary_stream_issue AS value FROM stream_risk_signal_day WHERE profile_id='${profile_id}' AND dt BETWEEN '${date_from}' AND '${date_to}' ORDER BY dt DESC, stream_risk_score DESC LIMIT 1;"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Latest Missing Rate",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL_UID}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT ROUND(COALESCE(MAX(missing_rate),0),6) AS value FROM stream_risk_signal_day WHERE profile_id='${profile_id}' AND dt BETWEEN '${date_from}' AND '${date_to}';"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Latest Duplicate Ratio",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL_UID}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT ROUND(COALESCE(MAX(duplicate_ratio),0),6) AS value FROM stream_risk_signal_day WHERE profile_id='${profile_id}' AND dt BETWEEN '${date_from}' AND '${date_to}';"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Stream Risk Score Trend",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL_UID}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT metric_minute AS time, stream_risk_score AS value, service_domain AS metric FROM stream_reliability_summary_minute WHERE profile_id='${profile_id}' AND DATE(metric_minute) BETWEEN '${date_from}' AND '${date_to}' ORDER BY metric_minute;"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Missing / Duplicate Trend",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL_UID}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT metric_minute AS time, missing_rate AS value, CONCAT(service_domain,'_missing') AS metric FROM stream_reliability_summary_minute WHERE profile_id='${profile_id}' AND DATE(metric_minute) BETWEEN '${date_from}' AND '${date_to}' ORDER BY metric_minute;"
+        },
+        {
+          "refId": "B",
+          "format": "time_series",
+          "rawSql": "SELECT metric_minute AS time, duplicate_ratio AS value, CONCAT(service_domain,'_duplicate') AS metric FROM stream_reliability_summary_minute WHERE profile_id='${profile_id}' AND DATE(metric_minute) BETWEEN '${date_from}' AND '${date_to}' ORDER BY metric_minute;"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Ordering Gap / Delay Trend",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL_UID}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT metric_minute AS time, ordering_gap_score AS value, CONCAT(service_domain,'_ordering') AS metric FROM stream_reliability_summary_minute WHERE profile_id='${profile_id}' AND DATE(metric_minute) BETWEEN '${date_from}' AND '${date_to}' ORDER BY metric_minute;"
+        },
+        {
+          "refId": "B",
+          "format": "time_series",
+          "rawSql": "SELECT metric_minute AS time, avg_event_delay_ms AS value, CONCAT(service_domain,'_delay_ms') AS metric FROM stream_reliability_summary_minute WHERE profile_id='${profile_id}' AND DATE(metric_minute) BETWEEN '${date_from}' AND '${date_to}' ORDER BY metric_minute;"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Daily Stream Risk Signals",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL_UID}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT dt, service_domain, missing_rate, duplicate_ratio, ordering_gap_score, avg_event_delay_ms, stream_risk_score, primary_stream_issue, status FROM stream_risk_signal_day WHERE profile_id='${profile_id}' AND dt BETWEEN '${date_from}' AND '${date_to}' ORDER BY dt DESC, service_domain;"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Root Cause (Stream Bridge)",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL_UID}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT dt, cause_rank, cause_type, cause_code, confidence, driver_source, related_metric, observed_value, detail FROM data_risk_root_cause_day WHERE profile_id='${profile_id}' AND dt BETWEEN '${date_from}' AND '${date_to}' AND cause_source='stream' ORDER BY dt DESC, cause_rank;"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Recommended Stream Actions",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL_UID}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT dt, metric_nm, root_cause, action_type, priority, confidence, action_source, action_desc FROM data_reliability_action_day WHERE profile_id='${profile_id}' AND dt BETWEEN '${date_from}' AND '${date_to}' AND action_source='stream' ORDER BY dt DESC, root_cause;"
+        }
+      ],
+      "options": {
+        "showHeader": true
+      }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "stream",
+    "reliability",
+    "kafka",
+    "portfolio"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_MYSQL_UID",
+        "type": "textbox",
+        "label": "Grafana MySQL Datasource UID",
+        "query": "mysql_uid",
+        "current": {
+          "text": "mysql_uid",
+          "value": "mysql_uid"
+        }
+      },
+      {
+        "name": "profile_id",
+        "type": "textbox",
+        "label": "Profile ID",
+        "query": "finance_bank",
+        "current": {
+          "text": "finance_bank",
+          "value": "finance_bank"
+        }
+      },
+      {
+        "name": "date_from",
+        "type": "textbox",
+        "label": "Date From",
+        "query": "2026-04-07",
+        "current": {
+          "text": "2026-04-07",
+          "value": "2026-04-07"
+        }
+      },
+      {
+        "name": "date_to",
+        "type": "textbox",
+        "label": "Date To",
+        "query": "2026-04-07",
+        "current": {
+          "text": "2026-04-07",
+          "value": "2026-04-07"
+        }
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "title": "Streaming Reliability Dashboard v0.4",
+  "uid": "stream-reliability-v04",
+  "version": 1
+}

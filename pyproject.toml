@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "financial-data-reliability-platform"
+version = "0.1.0"
+description = "Synthetic weblog simulation and financial data reliability platform"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.setuptools]
+package-dir = {"" = "simulator"}
+
+[tool.setuptools.packages.find]
+where = ["simulator"]
+
+[project.scripts]
+weblog-sim = "weblog_sim.cli:main"

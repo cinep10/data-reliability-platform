@@ -1,0 +1,4 @@
+site_key: default
+http_version: HTTP/1.1
+tz_offset_min: 540
+template: '{ip} - - [{ts}] "{method} {path} {httpv}" {status} {bytes} "{ref}" "{ua}" "{kv}"'

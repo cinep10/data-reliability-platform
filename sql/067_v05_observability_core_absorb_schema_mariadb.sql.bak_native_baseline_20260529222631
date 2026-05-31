@@ -1,0 +1,39 @@
+-- v0.5 Observability R analysis schema compatibility fix
+CREATE TABLE IF NOT EXISTS r_v05_observability_analysis_day (
+  profile_id VARCHAR(64) NOT NULL,
+  target_date DATE NOT NULL,
+  scenario_name VARCHAR(128) NOT NULL,
+  run_id BIGINT NOT NULL,
+  source_gen_run_id BIGINT NOT NULL,
+  collection_gap_rate DECIMAL(18,10) NOT NULL DEFAULT 0,
+  canonical_gap_rate DECIMAL(18,10) NOT NULL DEFAULT 0,
+  web_to_canonical_gap_rate DECIMAL(18,10) NOT NULL DEFAULT 0,
+  observability_overall_score DECIMAL(18,10) NOT NULL DEFAULT 0,
+  observability_risk_level VARCHAR(32) NOT NULL DEFAULT 'low',
+  recommended_semantic_risk VARCHAR(128) DEFAULT NULL,
+  dominant_observability_signal VARCHAR(128) DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY(profile_id,target_date,scenario_name,run_id,source_gen_run_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+SET @db := DATABASE();
+SET @sql := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=@db AND table_name='r_v05_observability_analysis_day' AND column_name='canonical_observability_gap_score')=0,
+  'ALTER TABLE r_v05_observability_analysis_day ADD COLUMN canonical_observability_gap_score DECIMAL(18,10) NOT NULL DEFAULT 0 AFTER web_to_canonical_gap_rate',
+  'SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=@db AND table_name='r_v05_observability_analysis_day' AND column_name='collection_completeness_score')=0,
+  'ALTER TABLE r_v05_observability_analysis_day ADD COLUMN collection_completeness_score DECIMAL(18,10) NOT NULL DEFAULT 0 AFTER canonical_observability_gap_score',
+  'SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=@db AND table_name='r_v05_observability_analysis_day' AND column_name='baseline_collection_gap_rate')=0,
+  'ALTER TABLE r_v05_observability_analysis_day ADD COLUMN baseline_collection_gap_rate DECIMAL(18,10) DEFAULT NULL AFTER collection_completeness_score',
+  'SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=@db AND table_name='r_v05_observability_analysis_day' AND column_name='baseline_delta_score')=0,
+  'ALTER TABLE r_v05_observability_analysis_day ADD COLUMN baseline_delta_score DECIMAL(18,10) NOT NULL DEFAULT 0 AFTER baseline_collection_gap_rate',
+  'SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=@db AND table_name='r_v05_observability_analysis_day' AND column_name='analysis_status')=0,
+  'ALTER TABLE r_v05_observability_analysis_day ADD COLUMN analysis_status VARCHAR(32) NOT NULL DEFAULT ''PASS'' AFTER baseline_delta_score',
+  'SELECT 1'); PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

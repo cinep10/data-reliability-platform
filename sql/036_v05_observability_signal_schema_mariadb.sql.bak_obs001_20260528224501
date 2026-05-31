@@ -1,0 +1,66 @@
+-- CASE-OBS-001 Phase 1.1
+-- Persist source-level WC collection observability evidence.
+-- Measurement layer only: this table is derived from WebServer stage vs WC stage rows.
+
+CREATE TABLE IF NOT EXISTS v05_observability_signal_day (
+  profile_id VARCHAR(64) NOT NULL,
+  target_date DATE NOT NULL,
+  scenario_name VARCHAR(128) NOT NULL,
+  run_id BIGINT NULL,
+  source_gen_run_id BIGINT NULL,
+  source_generation_scenario VARCHAR(128) NULL,
+
+  web_hits BIGINT NOT NULL DEFAULT 0,
+  wc_hits BIGINT NOT NULL DEFAULT 0,
+  collection_gap_count BIGINT NOT NULL DEFAULT 0,
+  collection_gap_rate DECIMAL(12,6) NOT NULL DEFAULT 0,
+
+  web_uv_ip BIGINT NOT NULL DEFAULT 0,
+  wc_uv_pcid BIGINT NOT NULL DEFAULT 0,
+  uv_gap_rate DECIMAL(12,6) NOT NULL DEFAULT 0,
+
+  checkout_web_hits BIGINT NOT NULL DEFAULT 0,
+  checkout_wc_hits BIGINT NOT NULL DEFAULT 0,
+  checkout_missing_rate DECIMAL(12,6) NOT NULL DEFAULT 0,
+
+  product_web_hits BIGINT NOT NULL DEFAULT 0,
+  product_wc_hits BIGINT NOT NULL DEFAULT 0,
+  product_missing_rate DECIMAL(12,6) NOT NULL DEFAULT 0,
+
+  observability_signal_score DECIMAL(12,6) NOT NULL DEFAULT 0,
+  observability_risk_level VARCHAR(32) NOT NULL DEFAULT 'low',
+  dominant_observability_signal VARCHAR(128) NULL,
+  recommended_semantic_risk VARCHAR(128) NULL,
+  recommended_action_family VARCHAR(128) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (profile_id, target_date, scenario_name, source_gen_run_id),
+  KEY idx_v05_obs_signal_run (profile_id, target_date, run_id, source_gen_run_id),
+  KEY idx_v05_obs_signal_scenario (scenario_name, target_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP VIEW IF EXISTS v05_wc_collection_reconciliation_day;
+CREATE VIEW v05_wc_collection_reconciliation_day AS
+SELECT
+  profile_id,
+  target_date,
+  scenario_name,
+  run_id,
+  source_gen_run_id,
+  source_generation_scenario,
+  web_hits,
+  wc_hits,
+  collection_gap_count,
+  collection_gap_rate,
+  web_uv_ip,
+  wc_uv_pcid,
+  uv_gap_rate,
+  checkout_missing_rate,
+  product_missing_rate,
+  observability_signal_score,
+  observability_risk_level,
+  dominant_observability_signal,
+  recommended_semantic_risk,
+  recommended_action_family
+FROM v05_observability_signal_day;

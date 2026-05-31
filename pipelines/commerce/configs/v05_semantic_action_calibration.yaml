@@ -1,0 +1,145 @@
+scenarios:
+  baseline:
+    expected_semantic_family: none
+    expected_action: no action
+    escalation_expectation: low
+    notes:
+    - Baseline residual should remain evidence only.
+    - Semantic/action suppression is expected under label gate.
+  source_partial_missing:
+    expected_semantic_family: completeness
+    current_observed_semantic: Coupon Attribution Distortion
+    expected_action: no action_or_low_priority_review
+    escalation_expectation: low_or_warning
+    tuning_candidates:
+    - measurement_realism completeness delta sensitivity
+    - source_partial_missing semantic mapping refinement
+    - completeness vs coupon attribution semantic boundary refinement
+  behavior_only_anomaly:
+    expected_semantic_family: customer_experience_or_behavior_transaction_consistency
+    expected_contract:
+      canonical_behavior_events: positive
+      canonical_transaction_events: zero_allowed
+      canonical_state_events: zero_allowed
+    expected_action: no action_or_low_priority_review
+    escalation_expectation: low_or_warning
+  transaction_missing_anomaly:
+    expected_semantic_family: behavior_transaction_consistency
+    expected_contract:
+      canonical_behavior_events: positive
+      canonical_transaction_events: zero_allowed
+      canonical_state_events: zero_allowed
+    expected_action: review_transaction_ingestion_or_mapping
+    escalation_expectation: warning_possible
+  state_missing_anomaly:
+    expected_semantic_family: transaction_state_integrity
+    expected_contract:
+      canonical_behavior_events: positive
+      canonical_transaction_events: positive
+      canonical_state_events: zero_allowed
+    expected_action: review_state_pipeline_or_state_transition
+    escalation_expectation: warning_possible
+  batch_asset_anomaly:
+    expected_semantic_family: batch_distribution
+    expected_action: review_batch_distribution_evidence
+    escalation_expectation: evidence_only_or_warning
+  batch_stream_anomaly:
+    expected_semantic_family: timeliness_or_stream_consistency
+    expected_action: review_stream_fallback_and_late_event_signal
+    escalation_expectation: evidence_only_or_warning
+  batch_stream_operational_anomaly:
+    expected_semantic_family: availability_or_operational_reliability
+    expected_action: review_operational_fallback_and_availability
+    escalation_expectation: evidence_only_or_warning
+  source_campaign_spike:
+    expected_semantic_family: volume_or_campaign_attribution
+    expected_action: review_campaign_context
+    escalation_expectation: low_or_warning
+  source_weather_drop:
+    expected_semantic_family: contextual_conversion_or_timeliness
+    expected_action: review_exogenous_context
+    escalation_expectation: low_or_warning
+  source_system_degraded:
+    expected_semantic_family: availability_or_timeliness
+    expected_action: review_source_system_health
+    escalation_expectation: warning_possible
+  source_latency_degradation:
+    expected_semantic_family: timeliness
+    expected_action: review_latency_pipeline
+    escalation_expectation: warning_possible
+  source_identity_drift:
+    expected_semantic_family: identity_mapping
+    expected_action: review_identity_contract
+    escalation_expectation: warning_possible
+  source_schema_drift:
+    expected_semantic_family: schema_validation
+    expected_action: review_source_schema_contract
+    escalation_expectation: warning_possible
+  source_wc_collection_missing:
+    expected_semantic_family: operational_observability_completeness
+    expected_semantic:
+    - WC Collection Completeness Risk
+    - Operational Observability Completeness Risk
+    - Observed KPI Distortion Risk
+    expected_action:
+    - wc collector validation
+    - web-wc reconciliation check
+    - observability KPI annotation
+    escalation_expectation: review_or_warning
+    calibration_mode: review
+    evidence_contract:
+      web_hits: positive
+      wc_hits: less_than_web_hits
+      collection_gap_rate: greater_than_0_05
+    tuning_candidates:
+    - v05_observability_signal_day should feed reliability_analysis_result_day_v05
+    - source_observability_anomaly should override commerce transaction action defaults
+    - action builder should prefer observability actions when collection_gap_rate
+      is material
+suite_after_tuning_candidates:
+- measurement_realism completeness delta sensitivity
+- source_partial_missing semantic mapping refinement
+- completeness vs coupon attribution semantic boundary refinement
+authority_policy:
+  v05_commerce_semantic_risk_action: authoritative
+  v04_measurement_r_analytics: evidence_only
+  v04_semantic_risk_action_ml: disabled_by_default
+  ml_feature_snapshot: supplementary_preserved_by_default
+calibration_review_policy:
+  strict_scenarios:
+  - baseline
+  review_scenarios:
+  - source_partial_missing
+  - behavior_only_anomaly
+  - transaction_missing_anomaly
+  - state_missing_anomaly
+  - batch_asset_anomaly
+  - batch_stream_anomaly
+  - batch_stream_operational_anomaly
+  - source_campaign_spike
+  - source_weather_drop
+  - source_system_degraded
+  - source_latency_degradation
+  - source_identity_drift
+  - source_schema_drift
+  - source_wc_collection_missing
+  result_policy:
+    PASS: expected family/action matched or baseline normal
+    REVIEW: mismatch is accepted as tuning candidate
+    MISMATCH: strict scenario mismatch or missing required artifact
+source_wc_collection_missing:
+  expected_semantic:
+  - WC Collection Completeness Risk
+  - Operational Observability Distortion
+  expected_action:
+  - wc collector validation
+  - web-wc reconciliation check
+  - observability KPI annotation
+  calibration_mode: review
+WC Collection Completeness Risk:
+  expected_action:
+  - wc collector validation
+  - web-wc reconciliation check
+  - observability KPI annotation
+  - temporary KPI decision freeze
+  calibration_mode: review

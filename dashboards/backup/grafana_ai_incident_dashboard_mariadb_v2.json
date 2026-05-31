@@ -1,0 +1,449 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_MARIADB",
+      "label": "MariaDB / MySQL",
+      "description": "Grafana MariaDB datasource",
+      "type": "datasource",
+      "pluginId": "mysql",
+      "pluginName": "MySQL"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "mysql",
+      "name": "MySQL",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Latest Incident Level",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MARIADB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT incident_level FROM ai_incident_summary_day WHERE profile_id = '${profile_id}' ORDER BY dt DESC LIMIT 1"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Latest Confidence Score",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MARIADB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(dt) AS time, confidence_score AS value FROM ai_incident_summary_day WHERE profile_id = '${profile_id}' ORDER BY dt DESC LIMIT 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Latest Risk Score",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MARIADB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(dt) AS time, risk_score AS value FROM ai_incident_summary_day WHERE profile_id = '${profile_id}' ORDER BY dt DESC LIMIT 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Latest Predicted Alert Probability",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MARIADB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(dt) AS time, predicted_alert_prob AS value FROM ai_incident_summary_day WHERE profile_id = '${profile_id}' ORDER BY dt DESC LIMIT 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "AI Incident Level Trend",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MARIADB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(dt) AS time, CASE incident_level WHEN 'normal' THEN 0 WHEN 'warning' THEN 1 WHEN 'alert' THEN 2 ELSE 0 END AS value FROM ai_incident_summary_day WHERE profile_id = '${profile_id}' AND $__timeFilter(dt) ORDER BY dt"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Confidence Score vs Predicted Alert Probability",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MARIADB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(dt) AS time, confidence_score AS value, 'confidence_score' AS metric FROM ai_incident_summary_day WHERE profile_id = '${profile_id}' AND $__timeFilter(dt) UNION ALL SELECT UNIX_TIMESTAMP(dt) AS time, predicted_alert_prob AS value, 'predicted_alert_prob' AS metric FROM ai_incident_summary_day WHERE profile_id = '${profile_id}' AND $__timeFilter(dt) ORDER BY time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "AI Incident Summary Detail",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MARIADB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT dt, incident_level, incident_title, confidence_score, llm_model, executive_summary, technical_summary, business_impact FROM ai_incident_summary_day WHERE profile_id = '${profile_id}' AND $__timeFilter(dt) ORDER BY dt DESC LIMIT 50"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "AI Recommended Actions",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MARIADB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT dt, action_rank, action_type, action_title, priority, owner_hint, evidence, action_detail FROM ai_recommended_action_day WHERE profile_id = '${profile_id}' AND $__timeFilter(dt) ORDER BY dt DESC, action_rank ASC LIMIT 200"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "ML vs AI Decision Alignment",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MARIADB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT p.dt, p.predicted_risk_status, p.prob_alert, p.prob_warning, p.prob_normal, a.incident_level, a.incident_title FROM ml_prediction_result p JOIN ai_incident_summary_day a ON p.profile_id = a.profile_id AND p.dt = a.dt WHERE p.profile_id = '${profile_id}' AND $__timeFilter(p.dt) ORDER BY p.dt DESC LIMIT 100"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Action Type Distribution",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MARIADB}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT action_type, COUNT(*) AS action_count FROM ai_recommended_action_day WHERE profile_id = '${profile_id}' AND $__timeFilter(dt) GROUP BY action_type ORDER BY action_count DESC"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "ai",
+    "mariadb",
+    "data-reliability"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "profile_id",
+        "label": "profile_id",
+        "type": "query",
+        "datasource": {
+          "type": "mysql",
+          "uid": "${DS_MARIADB}"
+        },
+        "refresh": 1,
+        "definition": "SELECT DISTINCT profile_id __text, profile_id __value FROM ai_incident_summary_day ORDER BY 1",
+        "query": "SELECT DISTINCT profile_id __text, profile_id __value FROM ai_incident_summary_day ORDER BY 1",
+        "current": {
+          "selected": true,
+          "text": "finance_bank",
+          "value": "finance_bank"
+        },
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  },
+  "time": {
+    "from": "2026-01-01T00:00:00Z",
+    "to": "2026-04-01T00:00:00Z"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AI Incident Review for MariaDB v2",
+  "uid": "ai-incident-mariadb-v2",
+  "version": 1,
+  "weekStart": ""
+}

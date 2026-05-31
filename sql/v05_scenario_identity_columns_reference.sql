@@ -1,0 +1,3 @@
+-- v0.5 scenario identity columns reference.
+-- Apply with:
+-- python3 -m pipelines.commerce.schema.ensure_v05_scenario_identity_columns ...

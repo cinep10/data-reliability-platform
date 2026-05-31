@@ -1,0 +1,181 @@
+profile_id: default
+profile_name: finance_bank
+description: >
+  Event-to-metric mapping for synthetic financial banking weblogs.
+  Designed for analyzer/collector layers that infer semantic events from path, query, and kv_raw.
+
+identity:
+  user_keys: [uid, nth_uid, pcid, nth_pcid, ip]
+  priority: [uid, pcid, ip]
+
+pageview:
+  include_methods: [GET, POST]
+  exclude_static_extensions: [css, js, png, jpg, jpeg, gif, ico, map, woff, woff2, ttf, eot, svg, webp, zip, txt]
+  evt_allowlist: ["", view]
+
+event_rules:
+  - event_name: login_success
+    match_any:
+      path_regex: ["/login/success", "/auth/login/success", "/signin/success"]
+      kv_regex:
+        - "(^|[;?&])evt=login_success([;&]|$)"
+        - "(^|[;?&])result=success([;&]|$)"
+    metric_targets: [login_success_count]
+
+  - event_name: auth_attempt
+    match_any:
+      path_regex: ["/login", "/auth/login", "/signin", "/cert"]
+      kv_regex:
+        - "(^|[;?&])evt=auth_attempt([;&]|$)"
+        - "(^|[;?&])evt=login_attempt([;&]|$)"
+        - "(^|[;?&])auth_step=attempt([;&]|$)"
+    metric_targets: [auth_attempt_count]
+
+  - event_name: auth_success
+    match_any:
+      path_regex: ["/auth/success", "/auth/complete", "/cert/success"]
+      kv_regex:
+        - "(^|[;?&])evt=auth_success([;&]|$)"
+        - "(^|[;?&])auth_result=success([;&]|$)"
+    metric_targets: [auth_success_count]
+
+  - event_name: auth_fail
+    match_any:
+      path_regex: ["/auth/fail", "/login/fail", "/cert/fail"]
+      kv_regex:
+        - "(^|[;?&])evt=auth_fail([;&]|$)"
+        - "(^|[;?&])auth_result=fail([;&]|$)"
+        - "(^|[;?&])result=fail([;&]|$)"
+    metric_targets: [auth_fail_count]
+
+  - event_name: otp_request
+    match_any:
+      path_regex: ["/otp", "/auth/otp", "/mfa"]
+      kv_regex:
+        - "(^|[;?&])evt=otp_request([;&]|$)"
+        - "(^|[;?&])otp=request([;&]|$)"
+        - "(^|[;?&])mfa=request([;&]|$)"
+    metric_targets: [otp_request_count]
+
+  - event_name: risk_login
+    match_any:
+      path_regex: ["/risk-login", "/auth/risk"]
+      kv_regex:
+        - "(^|[;?&])evt=risk_login([;&]|$)"
+        - "(^|[;?&])risk_login=1([;&]|$)"
+        - "(^|[;?&])fraud_flag=1([;&]|$)"
+    metric_targets: [risk_login_count]
+
+  - event_name: loan_view
+    match_any:
+      path_regex: ["/loan", "/loan/product", "/loan/detail"]
+      kv_regex:
+        - "(^|[;?&])evt=loan_view([;&]|$)"
+        - "(^|[;?&])product=loan([;&]|$)"
+    metric_targets: [loan_view_count]
+
+  - event_name: loan_apply_start
+    match_any:
+      path_regex: ["/loan/apply", "/loan/application/start"]
+      kv_regex:
+        - "(^|[;?&])evt=loan_apply_start([;&]|$)"
+        - "(^|[;?&])loan_apply=start([;&]|$)"
+    metric_targets: [loan_apply_start_count]
+
+  - event_name: loan_apply_submit
+    match_any:
+      path_regex: ["/loan/apply/submit", "/loan/application/submit", "/loan/complete"]
+      kv_regex:
+        - "(^|[;?&])evt=loan_apply_submit([;&]|$)"
+        - "(^|[;?&])loan_apply=submit([;&]|$)"
+        - "(^|[;?&])application_result=submitted([;&]|$)"
+    metric_targets: [loan_apply_submit_count]
+
+  - event_name: card_apply_start
+    match_any:
+      path_regex: ["/card/apply", "/card/application/start"]
+      kv_regex:
+        - "(^|[;?&])evt=card_apply_start([;&]|$)"
+        - "(^|[;?&])card_apply=start([;&]|$)"
+    metric_targets: [card_apply_start_count]
+
+  - event_name: card_apply_submit
+    match_any:
+      path_regex: ["/card/apply/submit", "/card/application/submit", "/card/complete"]
+      kv_regex:
+        - "(^|[;?&])evt=card_apply_submit([;&]|$)"
+        - "(^|[;?&])card_apply=submit([;&]|$)"
+        - "(^|[;?&])application_result=submitted([;&]|$)"
+    metric_targets: [card_apply_submit_count]
+
+derived_metrics:
+  - metric_name: daily_active_users
+    formula: "distinct(user_key) per dt"
+    source_layer: collector
+    grain: day
+  - metric_name: page_view_count
+    formula: "count(pageview event rows)"
+    source_layer: collector
+    grain: hh
+  - metric_name: avg_session_duration_sec
+    formula: "avg(session_duration_sec)"
+    source_layer: collector
+    grain: day
+  - metric_name: auth_success_rate
+    formula: "auth_success_count / auth_attempt_count"
+    source_layer: collector
+    grain: hh
+    default_when_zero_denominator: 0
+  - metric_name: auth_fail_rate
+    formula: "auth_fail_count / auth_attempt_count"
+    source_layer: collector
+    grain: hh
+    default_when_zero_denominator: 0
+  - metric_name: card_apply_submit_rate
+    formula: "card_apply_submit_count / card_apply_start_count"
+    source_layer: collector
+    grain: hh
+    default_when_zero_denominator: 0
+  - metric_name: new_user_ratio
+    formula: "new_users_30d / daily_active_users"
+    source_layer: collector
+    grain: day
+    lookback_days: 30
+
+control_metrics:
+  - metric_name: raw_event_count
+    formula: "count(stg_wc_log_hit rows)"
+    source_layer: raw
+    grain: hh
+  - metric_name: collector_event_count
+    formula: "count(mapped collector events)"
+    source_layer: collector
+    grain: hh
+  - metric_name: estimated_missing_rate
+    formula: "max(0, raw_event_count - collector_event_count) / nullif(raw_event_count,0)"
+    source_layer: control
+    grain: hh
+  - metric_name: schema_change_count
+    formula: "count(schema change detections)"
+    source_layer: control
+    grain: day
+  - metric_name: batch_delay_sec
+    formula: "ingestion_end_ts - scheduled_ts"
+    source_layer: control
+    grain: day
+
+priority_rules:
+  - name: submit_over_start
+    description: "If path/query matches both start and submit patterns, classify as submit."
+  - name: success_fail_over_attempt
+    description: "If auth outcome exists, classify as success/fail, not attempt."
+  - name: product_specific_over_generic_view
+    description: "Loan/card application pages take precedence over generic page views."
+
+validation_expectations:
+  - "auth_attempt_count >= auth_success_count"
+  - "auth_attempt_count >= auth_fail_count"
+  - "loan_view_count >= loan_apply_start_count"
+  - "loan_apply_start_count >= loan_apply_submit_count"
+  - "card_apply_start_count >= card_apply_submit_count"
+  - "otp_request_count > 0 implies auth_attempt_count > 0"

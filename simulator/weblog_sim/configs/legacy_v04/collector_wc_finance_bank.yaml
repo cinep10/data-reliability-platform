@@ -1,0 +1,21 @@
+collector:
+  page_event_mode: evt_or_page_type
+  drop_rate: 0.05
+  dup_rate: 0.01
+  force_status_200_rate: 0.00
+  seed: 42
+  host_default: www.finance-bank.example.com
+
+drift_profiles:
+  stable:
+    drop_rate: 0.05
+    dup_rate: 0.01
+    force_status_200_rate: 0.00
+  mild_drift:
+    drop_rate: 0.08
+    dup_rate: 0.02
+    force_status_200_rate: 0.05
+  severe_drift:
+    drop_rate: 0.12
+    dup_rate: 0.03
+    force_status_200_rate: 0.15

@@ -1,0 +1,11 @@
+apiVersion: 1
+datasources:
+  - name: MySQL-weblog
+    type: mysql
+    uid: mysql-weblog
+    access: proxy
+    url: 127.0.0.1:3306
+    user: nethru
+    database: weblog
+    secureJsonData:
+      password: nethru1234

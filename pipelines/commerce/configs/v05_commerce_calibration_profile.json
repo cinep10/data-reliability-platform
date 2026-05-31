@@ -1,0 +1,20 @@
+{
+  "expected_behavior_only_rate": 0.72,
+  "expected_transaction_only_rate": 0.06,
+  "expected_transaction_state_unmatched_rate": 0.32,
+  "expected_orphan_state_rate": 0.3,
+  "expected_transaction_without_state_rate": 0.06,
+  "expected_conversion_gap": 0.72,
+  "expected_payment_order_gap": 0.08,
+  "expected_refund_transition_gap": 0.08,
+  "expected_coupon_reconciliation_gap": 0.65,
+  "state_sla_warn_ms": 1800000,
+  "state_sla_high_ms": 7200000,
+  "semantic_gate": 0.08,
+  "runtime_evidence_weight": 0.12,
+  "runtime_batch_weight": 0.25,
+  "runtime_stream_weight": 0.25,
+  "runtime_operational_weight": 0.3,
+  "runtime_realism_weight": 0.2,
+  "_note": "JSON only. build_v05_reliability_analysis.R reads this through V05_COMMERCE_CALIBRATION_CONFIG."
+}

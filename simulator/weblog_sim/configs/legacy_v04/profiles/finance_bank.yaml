@@ -1,0 +1,87 @@
+site_key: "finance-bank.example.com"
+scenario:
+  site_host: "www.finance-bank.example.com"
+  pages:
+    - { path: "/", page_type: "home", weight: 0.05 }
+    - { path: "/main.do", page_type: "home", weight: 0.08 }
+    - { path: "/login.do", page_type: "login", weight: 0.10 }
+    - { path: "/dashboard.do", page_type: "dashboard", weight: 0.12 }
+    - { path: "/account/overview.do", page_type: "account", weight: 0.12 }
+    - { path: "/account/transaction.do", page_type: "account", weight: 0.07 }
+    - { path: "/auth/otp.do", page_type: "otp", weight: 0.04 }
+    - { path: "/loan/product.do", page_type: "loan", weight: 0.07 }
+    - { path: "/loan/status.do", page_type: "loan", weight: 0.06 }
+    - { path: "/loan/apply.do", page_type: "loan_apply", weight: 0.03 }
+    - { path: "/card/product.do", page_type: "card", weight: 0.06 }
+    - { path: "/card/usage.do", page_type: "card", weight: 0.06 }
+    - { path: "/card/apply.do", page_type: "card_apply", weight: 0.03 }
+    - { path: "/deposit/product.do", page_type: "deposit", weight: 0.04 }
+    - { path: "/transfer/step1.do", page_type: "transfer", weight: 0.03 }
+    - { path: "/transfer/confirm.do", page_type: "transfer_confirm", weight: 0.01 }
+    - { path: "/customer/notice.do", page_type: "notice", weight: 0.07 }
+    - { path: "/branch/find.do", page_type: "branch", weight: 0.06 }
+  countries: [["KR",0.965],["US",0.01],["JP",0.008],["VN",0.006],["SG",0.006],["DE",0.005]]
+  accept_lang_by_country:
+    KR: [["ko-KR,ko;q=0.9,en-US;q=0.6,en;q=0.4",0.96],["en-US,en;q=0.9,ko;q=0.4",0.04]]
+    US: [["en-US,en;q=0.9",1.0]]
+    JP: [["ja-JP,ja;q=0.9,en;q=0.5",1.0]]
+    VN: [["vi-VN,vi;q=0.9,en-US;q=0.5,en;q=0.3",1.0]]
+    SG: [["en-SG,en;q=0.9,zh;q=0.4",1.0]]
+    DE: [["de-DE,de;q=0.9,en-US;q=0.6,en;q=0.4",1.0]]
+  device_weights: [["mobile",0.68],["desktop",0.32]]
+  uas_mobile:
+    - ["Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1", 0.28]
+    - ["Mozilla/5.0 (Linux; Android 14; SM-S918N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36", 0.44]
+    - ["Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36", 0.16]
+    - ["Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/122.0.0.0 Mobile/15E148 Safari/604.1", 0.12]
+  uas_desktop:
+    - ["Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36", 0.72]
+    - ["Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15", 0.16]
+    - ["Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0", 0.12]
+  event_mix_default: [["view",0.78],["click",0.18],["scroll",0.03],["swipe",0.01]]
+  event_mix_by_page_type:
+    home: [["view",0.72],["click",0.20],["scroll",0.06],["swipe",0.02]]
+    login: [["view",0.72],["click",0.26],["scroll",0.01],["swipe",0.01]]
+    dashboard: [["view",0.78],["click",0.18],["scroll",0.03],["swipe",0.01]]
+    account: [["view",0.82],["click",0.14],["scroll",0.03],["swipe",0.01]]
+    otp: [["view",0.68],["click",0.30],["scroll",0.01],["swipe",0.01]]
+    loan: [["view",0.70],["click",0.24],["scroll",0.05],["swipe",0.01]]
+    loan_apply: [["view",0.60],["click",0.36],["scroll",0.03],["swipe",0.01]]
+    card: [["view",0.72],["click",0.22],["scroll",0.05],["swipe",0.01]]
+    card_apply: [["view",0.60],["click",0.36],["scroll",0.03],["swipe",0.01]]
+    deposit: [["view",0.76],["click",0.18],["scroll",0.05],["swipe",0.01]]
+    transfer: [["view",0.66],["click",0.31],["scroll",0.02],["swipe",0.01]]
+    transfer_confirm: [["view",0.55],["click",0.43],["scroll",0.01],["swipe",0.01]]
+    notice: [["view",0.78],["click",0.14],["scroll",0.07],["swipe",0.01]]
+    branch: [["view",0.76],["click",0.16],["scroll",0.07],["swipe",0.01]]
+  pcid_reuse: 0.88
+  pcid_uid_stickiness: 0.985
+  uid_rate: 0.74
+  uid_acquire_half_life_sessions: 4
+  uid_acquire_click_boost: 0.10
+  uid_acquire_page_types: ["login","dashboard","account","loan","loan_apply","card","card_apply","transfer","transfer_confirm","otp"]
+  revisit_ratio_daily: 0.58
+  new_visit_ratio_by_hh: [0.88,0.86,0.84,0.82,0.80,0.76,0.72,0.64,0.56,0.48,0.44,0.42,0.42,0.43,0.44,0.45,0.46,0.48,0.51,0.56,0.61,0.67,0.74,0.82]
+  revisit_ratio_by_hh: [0.12,0.14,0.16,0.18,0.20,0.24,0.28,0.36,0.44,0.52,0.56,0.58,0.58,0.57,0.56,0.55,0.54,0.52,0.49,0.44,0.39,0.33,0.26,0.18]
+  session_mean_sec: 260
+  session_event_rate: 0.022
+  session_event_rate_by_hh: [0.010,0.010,0.010,0.010,0.011,0.012,0.014,0.016,0.018,0.020,0.022,0.022,0.022,0.023,0.023,0.024,0.024,0.024,0.022,0.020,0.018,0.016,0.013,0.011]
+  target_pv_per_visit_mean: 5.8
+  target_pv_per_visit_std: 1.6
+  max_pageviews_per_session: 12
+  server_hit_ratio_by_event: {view: 1.00, click: 0.55, scroll: 0.08, swipe: 0.03}
+  traffic_curve:
+    mode: "hh_multiplier"
+    hh_multiplier: [0.04,0.04,0.05,0.05,0.06,0.08,0.12,0.18,0.32,0.52,0.72,0.84,0.86,0.90,0.95,1.00,1.08,1.12,1.02,0.82,0.58,0.42,0.24,0.12]
+    target_visit_per_hh: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    smooth_window_min: 0
+  weekday_multiplier: {sun: 0.82, mon: 1.10, tue: 1.06, wed: 1.04, thu: 1.02, fri: 1.00, sat: 0.74}
+  exogenous:
+    enabled: true
+    weather_type: "clear"
+    campaign_flag: "none"
+    system_flag: "normal"
+    weather_source: "static"
+    weather_file: ""
+    weather_api_base_url: ""
+    weather_api_key: ""

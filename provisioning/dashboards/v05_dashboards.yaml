@@ -1,0 +1,11 @@
+apiVersion: 1
+providers:
+  - name: v05-reliability-control-tower
+    orgId: 1
+    folder: v0.5 Reliability Control Tower
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/v05

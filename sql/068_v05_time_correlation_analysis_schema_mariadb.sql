@@ -1,0 +1,35 @@
+CREATE TABLE IF NOT EXISTS r_metric_time_pattern_anomaly_day (
+  profile_id VARCHAR(128) NOT NULL,
+  dt DATE NOT NULL,
+  run_id VARCHAR(128) NOT NULL DEFAULT '',
+  scenario_name VARCHAR(128) NOT NULL DEFAULT '',
+  metric_name VARCHAR(255) NOT NULL,
+  grain VARCHAR(32) NOT NULL DEFAULT 'day',
+  observed_value DOUBLE DEFAULT 0,
+  baseline_value DOUBLE DEFAULT 0,
+  baseline_sd DOUBLE DEFAULT 0,
+  z_score DOUBLE DEFAULT 0,
+  delta_value DOUBLE DEFAULT 0,
+  delta_ratio DOUBLE DEFAULT 0,
+  anomaly_score DOUBLE DEFAULT 0,
+  anomaly_status VARCHAR(32) DEFAULT 'PASS',
+  analysis_reason TEXT DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(profile_id,dt,run_id,metric_name,grain)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS r_metric_correlation_anomaly_day (
+  profile_id VARCHAR(128) NOT NULL,
+  dt DATE NOT NULL,
+  run_id VARCHAR(128) NOT NULL DEFAULT '',
+  scenario_name VARCHAR(128) NOT NULL DEFAULT '',
+  metric_pair VARCHAR(255) NOT NULL,
+  corr_value DOUBLE DEFAULT 0,
+  baseline_corr_value DOUBLE DEFAULT 0,
+  corr_delta DOUBLE DEFAULT 0,
+  anomaly_score DOUBLE DEFAULT 0,
+  anomaly_status VARCHAR(32) DEFAULT 'PASS',
+  sample_count INT DEFAULT 0,
+  analysis_reason TEXT DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(profile_id,dt,run_id,metric_pair)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

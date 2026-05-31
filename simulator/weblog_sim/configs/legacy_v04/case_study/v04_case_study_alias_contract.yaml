@@ -1,0 +1,46 @@
+# v0.4 Case Study Alias Contract
+# Business/case-study terms MUST map to existing v0.4 cookie keys.
+# Do not introduce new cookie names unless all downstream parsers are upgraded.
+
+case1_offer_channel_message_missing:
+  case_id: CASE-OFFER-001
+  scenario_name: source_offer_schema_drift_realtime_missing
+  conceptual_aliases:
+    offer_channel_field_changed: schema_flag=drift
+    offer_schema_drift: anomaly_type=schema_drift
+    realtime_delivery_degraded: drop_probability + latency_shift_ms
+    offer_delivery_missing: reconciliation_flag=offer_delivery_missing
+  existing_cookie_keys_used:
+    - scenario_id
+    - scenario_name
+    - anomaly_type
+    - drift
+    - affected
+    - schema_version
+    - schema_flag
+    - drop_probability
+    - latency_shift_ms
+    - reconciliation_flag
+    - financial_product
+    - funnel_stage
+
+case2_recommendation_false_conversion:
+  case_id: CASE-REC-002
+  scenario_name: source_recommendation_schema_drift_false_conversion
+  conceptual_aliases:
+    recommend_event_semantic_changed: schema_flag=drift
+    false_conversion_amplification: conversion_multiplier + duplicate_multiplier
+    kpi_semantic_mismatch: reconciliation_flag=kpi_semantic_mismatch
+  existing_cookie_keys_used:
+    - scenario_id
+    - scenario_name
+    - anomaly_type
+    - drift
+    - affected
+    - schema_version
+    - schema_flag
+    - conversion_multiplier
+    - duplicate_multiplier
+    - reconciliation_flag
+    - financial_product
+    - funnel_stage

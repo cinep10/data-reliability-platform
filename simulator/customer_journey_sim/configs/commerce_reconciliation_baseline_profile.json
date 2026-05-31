@@ -1,0 +1,20 @@
+{
+  "profile_id": "commerce_deliver",
+  "purpose": "Baseline/noise profile for v0.5 commerce reconciliation semantic calibration. This is a normal-commerce reference, not a risk rule table.",
+  "principle": "Risk is calculated from measurement delta over baseline/noise, not from raw business counts or scenario names.",
+  "expected_behavior_only_rate": 0.72,
+  "expected_transaction_only_rate": 0.06,
+  "expected_transaction_state_unmatched_rate": 0.32,
+  "expected_orphan_state_rate": 0.30,
+  "expected_transaction_without_state_rate": 0.06,
+  "expected_conversion_gap": 0.72,
+  "expected_payment_order_gap": 0.08,
+  "expected_refund_transition_gap": 0.08,
+  "expected_coupon_reconciliation_gap": 0.65,
+  "state_sla_warn_ms": 1800000,
+  "state_sla_high_ms": 7200000,
+  "semantic_gate": 0.08,
+  "warning_gate": 0.30,
+  "high_gate": 0.55,
+  "critical_gate": 0.75
+}

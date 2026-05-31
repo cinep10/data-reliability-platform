@@ -1,0 +1,52 @@
+suppressWarnings({library(DBI); library(RMariaDB); library(jsonlite)})
+args <- commandArgs(trailingOnly=TRUE)
+get_arg <- function(name, default=NULL) { i <- match(name,args); if(!is.na(i) && i < length(args)) args[[i+1]] else default }
+q <- function(con,x) as.character(dbQuoteString(con,x))
+clamp01 <- function(x) max(0,min(1,as.numeric(x)))
+profile_id <- get_arg('--profile-id'); target_date <- get_arg('--target-date'); run_id <- as.integer(get_arg('--run-id')); source_gen_run_id <- get_arg('--source-gen-run-id'); scenario_name <- get_arg('--scenario-name','baseline')
+con <- dbConnect(RMariaDB::MariaDB(), host=get_arg('--db-host'), port=as.integer(get_arg('--db-port','3306')), user=get_arg('--db-user'), password=get_arg('--db-pass'), dbname=get_arg('--db-name'))
+on.exit(dbDisconnect(con), add=TRUE)
+table_exists <- function(t) dbGetQuery(con,sprintf("SELECT COUNT(*) n FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=%s",q(con,t)))$n[[1]]>0
+table_cols <- function(t) { if(!table_exists(t)) return(character()); as.character(dbGetQuery(con,sprintf("SELECT column_name FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name=%s",q(con,t)))$column_name) }
+ensure_col <- function(t,c,ddl) { if(!(c %in% table_cols(t))) dbExecute(con,sprintf('ALTER TABLE `%s` ADD COLUMN `%s` %s',t,c,ddl)) }
+where <- 'profile_id=? AND target_date=? AND run_id=?'; params <- list(profile_id,target_date,run_id)
+if(!is.null(source_gen_run_id) && nzchar(source_gen_run_id)) { where <- paste(where,'AND source_gen_run_id=?'); params <- c(params,list(as.integer(source_gen_run_id))) }
+if(table_exists('semantic_interpretation_day_v05')) { ensure_col('semantic_interpretation_day_v05','runtime_semantic_score','DOUBLE NULL'); ensure_col('semantic_interpretation_day_v05','dominant_runtime_signal','VARCHAR(128) NULL'); ensure_col('semantic_interpretation_day_v05','observability_semantic_score','DOUBLE NULL'); ensure_col('semantic_interpretation_day_v05','dominant_observability_signal','VARCHAR(128) NULL') }
+a <- dbGetQuery(con,paste('SELECT * FROM reliability_analysis_result_day_v05 WHERE',where),params=params)
+m <- dbGetQuery(con,paste('SELECT * FROM v05_reconciliation_measurement_day WHERE',where),params=params)
+if(nrow(a)<1 || nrow(m)<1) stop('missing analysis or measurement row')
+a <- a[1,]; m <- m[1,]
+num <- function(df,col) if(col %in% names(df)) as.numeric(ifelse(is.na(df[[col]][[1]]),0,df[[col]][[1]])) else 0
+chr <- function(df,col,default='none') if(col %in% names(df) && !is.na(df[[col]][[1]]) && nzchar(as.character(df[[col]][[1]]))) as.character(df[[col]][[1]]) else default
+is_baseline_like <- tolower(scenario_name) %in% c('baseline','normal','stable')
+base_gate <- 0.08; baseline_gate <- 0.30
+recon <- num(a,'reconciliation_gap_score'); prop <- num(a,'propagation_score'); dist <- num(a,'distortion_score'); base_delta <- num(a,'baseline_delta'); trans_loss <- num(a,'transaction_loss_score'); cust <- num(a,'customer_impact_score')
+runtime_score <- num(a,'runtime_evidence_score'); batch_score <- num(a,'batch_evidence_score'); stream_score <- num(a,'stream_evidence_score'); operational_score <- num(a,'operational_evidence_score'); realism_score <- num(a,'realism_evidence_score'); dominant_runtime <- chr(a,'dominant_runtime_signal','none')
+obs <- data.frame()
+if(table_exists('r_v05_observability_analysis_day')) obs <- dbGetQuery(con,sprintf("SELECT * FROM r_v05_observability_analysis_day WHERE profile_id=%s AND target_date=%s AND run_id=%d AND scenario_name=%s",q(con,profile_id),q(con,target_date),run_id,q(con,scenario_name)))
+obs_score <- if(nrow(obs)>0) max(as.numeric(obs$observability_overall_score),na.rm=TRUE) else 0; if(!is.finite(obs_score)) obs_score <- 0
+obs_signal <- if(nrow(obs)>0) as.character(obs$dominant_observability_signal[[1]]) else 'none'
+obs_semantic <- if(nrow(obs)>0) as.character(obs$recommended_semantic_risk[[1]]) else 'None'
+runtime_semantic_score <- clamp01(runtime_score)
+behavior_transaction_consistency <- clamp01(0.55*recon + 0.25*base_delta + 0.20*cust)
+transaction_state_integrity <- clamp01(0.50*recon + 0.30*trans_loss + 0.20*prop)
+order_lifecycle_consistency <- clamp01(0.45*trans_loss + 0.35*recon + 0.20*dist)
+payment_state_reconciliation <- clamp01(0.60*trans_loss + 0.25*dist + 0.15*recon)
+delivery_timeliness <- clamp01(0.46*dist + 0.22*prop + 0.20*base_delta + 0.12*stream_score)
+coupon_attribution <- clamp01(0.62*dist + 0.18*cust + 0.12*base_delta + 0.08*batch_score)
+customer_experience <- clamp01(0.52*cust + 0.23*dist + 0.15*base_delta + 0.10*realism_score)
+runtime_operational <- clamp01(0.55*operational_score + 0.25*stream_score + 0.20*runtime_score)
+scores <- c('Behavior-Transaction Consistency Risk'=behavior_transaction_consistency,'Transaction-State Integrity Risk'=transaction_state_integrity,'Order Lifecycle Consistency Risk'=order_lifecycle_consistency,'Payment-State Reconciliation Risk'=payment_state_reconciliation,'Delivery Timeliness Risk'=delivery_timeliness,'Coupon Attribution Distortion'=coupon_attribution,'Customer Experience Risk'=customer_experience,'Runtime Operational Reliability Risk'=runtime_operational)
+if(obs_score >= base_gate && obs_semantic!='None') scores[obs_semantic] <- obs_score
+if(is_baseline_like && 'Runtime Operational Reliability Risk' %in% names(scores)) scores[['Runtime Operational Reliability Risk']] <- min(scores[['Runtime Operational Reliability Risk']],base_gate/2)
+max_score <- max(scores); active_gate <- if(is_baseline_like) baseline_gate else base_gate
+if(max_score < active_gate) { dominant <- 'None'; conf <- 0; suppression <- if(is_baseline_like) 'baseline_normal_variation_below_label_gate' else 'below_semantic_gate' } else { dominant <- names(scores)[which.max(scores)]; conf <- clamp01((max_score-active_gate)/max(0.30-active_gate,0.0001)); suppression <- 'none' }
+payload <- toJSON(list(input_dependency='reliability_analysis_result_day_v05 + v05_reconciliation_measurement_day + optional r_v05_observability_analysis_day', scenario_name_used_as_risk_driver=FALSE, observability=list(score=obs_score,signal=obs_signal,semantic=obs_semantic), score_vector=as.list(scores), dominant_semantic_risk=dominant, suppression_reason=suppression),auto_unbox=TRUE)
+dbExecute(con,paste('DELETE FROM semantic_interpretation_day_v05 WHERE',where),params=params)
+cols <- table_cols('semantic_interpretation_day_v05')
+insert_cols <- c('run_id','profile_id','source_gen_run_id','target_date','scenario_name','behavior_transaction_consistency_score','transaction_state_integrity_score','order_lifecycle_consistency_score','payment_state_reconciliation_score','delivery_timeliness_score','coupon_attribution_score','customer_experience_score','dominant_semantic_risk','runtime_semantic_score','dominant_runtime_signal','observability_semantic_score','dominant_observability_signal','semantic_payload_json')
+vals <- list(run_id,profile_id,ifelse(is.null(source_gen_run_id)||!nzchar(source_gen_run_id),NA,as.integer(source_gen_run_id)),target_date,scenario_name,scores[[1]],scores[[2]],scores[[3]],scores[[4]],scores[[5]],scores[[6]],scores[[7]],dominant,runtime_semantic_score,dominant_runtime,obs_score,obs_signal,payload)
+keep <- insert_cols %in% cols
+sql <- sprintf('INSERT INTO semantic_interpretation_day_v05(%s) VALUES(%s)',paste(insert_cols[keep],collapse=','),paste(rep('?',sum(keep)),collapse=','))
+dbExecute(con,sql,params=vals[keep])
+cat(sprintf('[build_v05_semantic_interpretation.R] OK dominant=%s max_raw_score=%.6f active_gate=%.6f observability_score=%.6f observability_signal=%s philosophy=PASS\n',dominant,max_score,active_gate,obs_score,obs_signal))

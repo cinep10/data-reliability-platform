@@ -1,0 +1,383 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_MYSQL",
+      "label": "MySQL",
+      "type": "datasource",
+      "pluginId": "mysql",
+      "pluginName": "MySQL"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "mysql",
+      "name": "MySQL",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "v0.5",
+    "decision-chain"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "profile_id",
+        "type": "query",
+        "label": "profile_id",
+        "datasource": {
+          "type": "mysql",
+          "uid": "${DS_MYSQL}"
+        },
+        "definition": "SELECT DISTINCT profile_id FROM v05_reconciliation_measurement_day ORDER BY profile_id",
+        "query": "SELECT DISTINCT profile_id FROM v05_reconciliation_measurement_day ORDER BY profile_id",
+        "refresh": 1,
+        "sort": 1,
+        "current": {
+          "text": "commerce_deliver",
+          "value": "commerce_deliver"
+        }
+      },
+      {
+        "name": "scenario_name",
+        "type": "query",
+        "label": "scenario",
+        "datasource": {
+          "type": "mysql",
+          "uid": "${DS_MYSQL}"
+        },
+        "definition": "SELECT '.*' AS scenario_name UNION SELECT DISTINCT scenario_name FROM unified_reliability_score_day_v05 WHERE profile_id='${profile_id}' ORDER BY scenario_name",
+        "query": "SELECT '.*' AS scenario_name UNION SELECT DISTINCT scenario_name FROM unified_reliability_score_day_v05 WHERE profile_id='${profile_id}' ORDER BY scenario_name",
+        "refresh": 1,
+        "sort": 1,
+        "current": {
+          "text": ".*",
+          "value": ".*"
+        }
+      }
+    ]
+  },
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "v0.5 Measurement Semantic Risk Action Flow",
+  "uid": "v05-decision-chain",
+  "version": 1,
+  "weekStart": "",
+  "panels": [
+    {
+      "type": "row",
+      "title": "Analytics \u2192 Semantic \u2192 Risk \u2192 Action",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Analytics Scores",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${DS_MYSQL}"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(a.target_date) time_sec,a.reconciliation_gap_score value,CONCAT(a.scenario_name,' reconciliation') metric FROM reliability_analysis_result_day_v05 a WHERE a.profile_id='${profile_id}' AND $__timeFilter(a.target_date) AND ('${scenario_name}'='.*' OR a.scenario_name REGEXP '${scenario_name}') UNION ALL SELECT UNIX_TIMESTAMP(a.target_date),a.distortion_score,CONCAT(a.scenario_name,' distortion') FROM reliability_analysis_result_day_v05 a WHERE a.profile_id='${profile_id}' AND $__timeFilter(a.target_date) AND ('${scenario_name}'='.*' OR a.scenario_name REGEXP '${scenario_name}') UNION ALL SELECT UNIX_TIMESTAMP(a.target_date),a.transaction_loss_score,CONCAT(a.scenario_name,' tx_loss') FROM reliability_analysis_result_day_v05 a WHERE a.profile_id='${profile_id}' AND $__timeFilter(a.target_date) AND ('${scenario_name}'='.*' OR a.scenario_name REGEXP '${scenario_name}') UNION ALL SELECT UNIX_TIMESTAMP(a.target_date),COALESCE(a.runtime_evidence_score,0),CONCAT(a.scenario_name,' runtime') FROM reliability_analysis_result_day_v05 a WHERE a.profile_id='${profile_id}' AND $__timeFilter(a.target_date) AND ('${scenario_name}'='.*' OR a.scenario_name REGEXP '${scenario_name}') ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "auto",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Unified Risk Components",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${DS_MYSQL}"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(u.target_date) time_sec,u.semantic_base_score value,CONCAT(u.scenario_name,' semantic') metric FROM unified_reliability_score_day_v05 u WHERE u.profile_id='${profile_id}' AND $__timeFilter(u.target_date) AND ('${scenario_name}'='.*' OR u.scenario_name REGEXP '${scenario_name}') UNION ALL SELECT UNIX_TIMESTAMP(u.target_date),u.reconciliation_gap_weight,CONCAT(u.scenario_name,' recon_weight') FROM unified_reliability_score_day_v05 u WHERE u.profile_id='${profile_id}' AND $__timeFilter(u.target_date) AND ('${scenario_name}'='.*' OR u.scenario_name REGEXP '${scenario_name}') UNION ALL SELECT UNIX_TIMESTAMP(u.target_date),COALESCE(u.runtime_evidence_weight,0),CONCAT(u.scenario_name,' runtime_weight') FROM unified_reliability_score_day_v05 u WHERE u.profile_id='${profile_id}' AND $__timeFilter(u.target_date) AND ('${scenario_name}'='.*' OR u.scenario_name REGEXP '${scenario_name}') UNION ALL SELECT UNIX_TIMESTAMP(u.target_date),u.overall_risk_score,CONCAT(u.scenario_name,' overall') FROM unified_reliability_score_day_v05 u WHERE u.profile_id='${profile_id}' AND $__timeFilter(u.target_date) AND ('${scenario_name}'='.*' OR u.scenario_name REGEXP '${scenario_name}') ORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "auto",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "type": "barchart",
+      "title": "Dominant Semantic Distribution",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${DS_MYSQL}"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT UNIX_TIMESTAMP(MAX(s.target_date)) time_sec,COUNT(*) value,COALESCE(s.dominant_semantic_risk,'None') metric FROM semantic_interpretation_day_v05 s WHERE s.profile_id='${profile_id}' AND $__timeFilter(s.target_date) AND ('${scenario_name}'='.*' OR s.scenario_name REGEXP '${scenario_name}') GROUP BY COALESCE(s.dominant_semantic_risk,'None')",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "auto",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "auto",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0,
+        "showValue": "auto",
+        "stacking": "none",
+        "groupWidth": 0.7,
+        "barWidth": 0.97,
+        "barRadius": 0,
+        "fullHighlight": false,
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "type": "table",
+      "title": "Actions",
+      "datasource": {
+        "type": "mysql",
+        "uid": "${DS_MYSQL}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mysql",
+            "uid": "${DS_MYSQL}"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT target_date,scenario_name,run_id,action_rank,action_type,recommended_action,evidence_table,evidence_metric,evidence_value FROM action_recommendation_day_v05 a WHERE a.profile_id='${profile_id}' AND $__timeFilter(a.target_date) AND ('${scenario_name}'='.*' OR a.scenario_name REGEXP '${scenario_name}') ORDER BY target_date DESC,run_id DESC,action_rank LIMIT 100",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 9,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false,
+          "fields": ""
+        }
+      }
+    }
+  ]
+}
