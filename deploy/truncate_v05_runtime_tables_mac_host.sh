@@ -3,10 +3,10 @@ set -euo pipefail
 
 # Mac mini Host operation profile.
 # Defaults:
-# - PROJECT_ROOT=/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform
-# - SOURCE_LOG_ROOT=/Volumes/EXTERNAL_USB/dev/log/logdata/source
+# - PROJECT_ROOT=/Users/dwkim/dev/repo/data-reliability-platform
+# - SOURCE_LOG_ROOT=/Users/dwkim/dev/log/logdata/source
 # - DB_HOST=127.0.0.1
-PROJECT_ROOT="${PROJECT_ROOT:-/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform}"
+PROJECT_ROOT="${PROJECT_ROOT:-/Users/dwkim/dev/repo/data-reliability-platform}"
 DB_HOST="${DB_HOST:-127.0.0.1}"
 DB_PORT="${DB_PORT:-3306}"
 DB_USER="${DB_USER:-nethru}"
@@ -47,7 +47,7 @@ done
 
 [[ -n "$TARGET_DATE" ]] || { echo "[ERROR] --target-date required"; exit 1; }
 
-SOURCE_LOG_ROOT="${SOURCE_LOG_ROOT:-/Volumes/EXTERNAL_USB/dev/log/logdata/source}"
+SOURCE_LOG_ROOT="${SOURCE_LOG_ROOT:-/Users/dwkim/dev/log/logdata/source}"
 
 mysql_db(){ mysql -N -s -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" "$@"; }
 mysql_info(){ mysql -N -s -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" information_schema "$@"; }

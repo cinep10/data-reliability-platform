@@ -11,7 +11,7 @@ set -euo pipefail
 #   - first days baseline, middle anomaly days, final target-date baseline.
 #   - this makes baseline history statistically meaningful while injecting anomaly pulses.
 
-PROJECT_ROOT="${PROJECT_ROOT:-/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform}"
+PROJECT_ROOT="${PROJECT_ROOT:-/Users/dwkim/dev/repo/data-reliability-platform}"
 RUN_SCRIPT="${RUN_SCRIPT:-$PROJECT_ROOT/deploy/run_v05_reliability_pipeline_commerce_mac_host.sh}"
 COMPACT_SCRIPT="${COMPACT_SCRIPT:-$PROJECT_ROOT/deploy/compact_v05_backfill_runtime_mac_host.sh}"
 BASH_BIN="${BASH_BIN:-/opt/homebrew/bin/bash}"

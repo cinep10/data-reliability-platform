@@ -23,7 +23,7 @@ set -euo pipefail
 #   - v0.4 measurement detail rows and batch delta/anomaly day rows after they have
 #     been materialized into C4 statistical evidence/history.
 
-PROJECT_ROOT="${PROJECT_ROOT:-/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform}"
+PROJECT_ROOT="${PROJECT_ROOT:-/Users/dwkim/dev/repo/data-reliability-platform}"
 DB_HOST="${DB_HOST:-127.0.0.1}"
 DB_PORT="${DB_PORT:-3306}"
 DB_USER="${DB_USER:-nethru}"
@@ -39,7 +39,7 @@ REMOVE_CASE_OBS_FIGURES="${REMOVE_CASE_OBS_FIGURES:-false}"
 CASE_OBS_ARTIFACT_ROOT="${CASE_OBS_ARTIFACT_ROOT:-$PROJECT_ROOT/artifacts/case_study}"
 DRY_RUN="${DRY_RUN:-false}"
 VERIFY_AFTER_COMPACT="${VERIFY_AFTER_COMPACT:-true}"
-SOURCE_LOG_ROOT="${SOURCE_LOG_ROOT:-/Volumes/EXTERNAL_USB/dev/log/logdata/source}"
+SOURCE_LOG_ROOT="${SOURCE_LOG_ROOT:-/Users/dwkim/dev/log/logdata/source}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

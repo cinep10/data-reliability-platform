@@ -5,9 +5,9 @@ set -euo pipefail
 # Use Homebrew bash if possible:
 #   /opt/homebrew/bin/bash deploy/run_v05_reliability_pipeline_commerce_mac_host.sh 2026-05-21 baseline 0
 # Defaults:
-# - PROJECT_ROOT=/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform
-# - SOURCE_LOG_ROOT=/Volumes/EXTERNAL_USB/dev/log/logdata/source
-# - LOG_DIR=/Volumes/EXTERNAL_USB/dev/log/runtime
+# - PROJECT_ROOT=/Users/dwkim/dev/repo/data-reliability-platform
+# - SOURCE_LOG_ROOT=/Users/dwkim/dev/log/logdata/source
+# - LOG_DIR=/Users/dwkim/dev/log/runtime
 # - DB_HOST=127.0.0.1
 DT_FROM="${1:?target date required, e.g. 2026-05-21}"
 SCENARIO="${2:-baseline}"
@@ -15,7 +15,7 @@ JOURNEYS="${3:-0}"
 RUN_ID_INPUT="${4:-}"
 SOURCE_GEN_RUN_ID_INPUT="${5:-}"
 
-PROJECT_ROOT="${PROJECT_ROOT:-/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform}"
+PROJECT_ROOT="${PROJECT_ROOT:-/Users/dwkim/dev/repo/data-reliability-platform}"
 
 # v0.5 commerce calibration profile for R analytics
 export V05_COMMERCE_CALIBRATION_CONFIG="${V05_COMMERCE_CALIBRATION_CONFIG:-$PROJECT_ROOT/pipelines/commerce/configs/v05_commerce_calibration_profile.json}"
@@ -25,7 +25,7 @@ RSCRIPT_BIN="${RSCRIPT_BIN:-Rscript}"
 DB_HOST="${DB_HOST:-127.0.0.1}"; DB_PORT="${DB_PORT:-3306}"; DB_USER="${DB_USER:-nethru}"; DB_PASSWORD="${DB_PASSWORD:-${DB_PASS:-nethru1234}}"; DB_NAME="${DB_NAME:-weblog}"
 KAFKA_BOOTSTRAP="${KAFKA_BOOTSTRAP:-127.0.0.1:9092}"
 PROFILE_ID="${PROFILE_ID:-commerce_deliver}"
-SOURCE_LOG_ROOT="${SOURCE_LOG_ROOT:-/Volumes/EXTERNAL_USB/dev/log/logdata/source}"
+SOURCE_LOG_ROOT="${SOURCE_LOG_ROOT:-/Users/dwkim/dev/log/logdata/source}"
 OUTPUT_DIR="${OUTPUT_DIR:-$SOURCE_LOG_ROOT/$PROFILE_ID/$DT_FROM/$SCENARIO}"
 DT_TO="${DT_TO:-$DT_FROM}"
 SEED="${SEED:-42}"
@@ -104,7 +104,7 @@ RUN_V05_PATTERN_DRIVEN_RISK_VALIDATION="${RUN_V05_PATTERN_DRIVEN_RISK_VALIDATION
 RUN_V05_BEHAVIOR_SCOPE_ALLOW_BASELINE_STAT_SUPPRESSION="${RUN_V05_BEHAVIOR_SCOPE_ALLOW_BASELINE_STAT_SUPPRESSION:-true}"
 RUN_COMMERCE_FALLBACK_RUNTIME="${RUN_COMMERCE_FALLBACK_RUNTIME:-true}"
 ALLOW_LOW_RISK_ANOMALY="${ALLOW_LOW_RISK_ANOMALY:-true}"
-LOG_DIR="${LOG_DIR:-/Volumes/EXTERNAL_USB/dev/log/runtime}"
+LOG_DIR="${LOG_DIR:-/Users/dwkim/dev/log/runtime}"
 mkdir -p "$LOG_DIR" "$OUTPUT_DIR"
 LOG_FILE="${LOG_FILE:-$LOG_DIR/run_v05_commerce_${PROFILE_ID}_${DT_FROM}_${SCENARIO}_$(date +%Y%m%d%H%M%S).log}"
 exec > >(tee -a "$LOG_FILE") 2>&1

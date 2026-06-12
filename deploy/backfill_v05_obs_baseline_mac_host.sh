@@ -5,7 +5,7 @@ set -euo pipefail
 # Runs 7d/30d history for baseline and selected anomaly scenarios, refreshes target-date
 # statistical evidence, validates meaning, and compacts heavy source/canonical runtime rows.
 
-PROJECT_ROOT="${PROJECT_ROOT:-/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform}"
+PROJECT_ROOT="${PROJECT_ROOT:-/Users/dwkim/dev/repo/data-reliability-platform}"
 RUN_SCRIPT="${RUN_SCRIPT:-$PROJECT_ROOT/deploy/run_v05_reliability_pipeline_commerce_mac_host.sh}"
 COMPACT_SCRIPT="${COMPACT_SCRIPT:-$PROJECT_ROOT/deploy/compact_v05_backfill_runtime_mac_host.sh}"
 BASH_BIN="${BASH_BIN:-/opt/homebrew/bin/bash}"

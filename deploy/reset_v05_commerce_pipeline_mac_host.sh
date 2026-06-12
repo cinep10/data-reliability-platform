@@ -3,8 +3,8 @@ set -euo pipefail
 
 # Mac mini Host operation profile.
 # Defaults:
-# - PROJECT_ROOT=/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform
-# - SOURCE_LOG_ROOT=/Volumes/EXTERNAL_USB/dev/log/logdata/source
+# - PROJECT_ROOT=/Users/dwkim/dev/repo/data-reliability-platform
+# - SOURCE_LOG_ROOT=/Users/dwkim/dev/log/logdata/source
 # - DB_HOST=127.0.0.1
 DT_FROM="${1:?dt_from required, e.g. 2026-05-21}"
 DT_TO="${2:-$DT_FROM}"
@@ -12,7 +12,7 @@ SCENARIO_FILTER="${3:-all}"
 RUN_ID_FILTER="${4:-all}"
 SOURCE_GEN_RUN_ID_FILTER="${5:-all}"
 
-PROJECT_ROOT="${PROJECT_ROOT:-/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform}"
+PROJECT_ROOT="${PROJECT_ROOT:-/Users/dwkim/dev/repo/data-reliability-platform}"
 DB_HOST="${DB_HOST:-127.0.0.1}"
 DB_PORT="${DB_PORT:-3306}"
 DB_USER="${DB_USER:-nethru}"
@@ -29,7 +29,7 @@ RESET_BASELINE_REFERENCE="${RESET_BASELINE_REFERENCE:-false}"
 RESET_OBS_BASELINE_REFERENCE="${RESET_OBS_BASELINE_REFERENCE:-false}"
 DRY_RUN="${DRY_RUN:-false}"
 
-SOURCE_LOG_ROOT="${SOURCE_LOG_ROOT:-/Volumes/EXTERNAL_USB/dev/log/logdata/source}"
+SOURCE_LOG_ROOT="${SOURCE_LOG_ROOT:-/Users/dwkim/dev/log/logdata/source}"
 
 mysql_db(){ mysql -N -s -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" "$@"; }
 mysql_info(){ mysql -N -s -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" information_schema "$@"; }
