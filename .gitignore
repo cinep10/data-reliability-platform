@@ -19,3 +19,4 @@ tmp/
 data/raw/
 data/generated/
 data/runtime/
+.venv/

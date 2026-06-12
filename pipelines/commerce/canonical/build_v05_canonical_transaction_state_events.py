@@ -38,13 +38,13 @@ def build_behavior(cur,a):
         where += " AND source_gen_run_id=%s"; params.append(a.source_gen_run_id)
     cur.execute(f"SELECT * FROM canonical_events WHERE {where} ORDER BY event_time, canonical_event_id", params)
     rows=cur.fetchall(); vals=[]
-    sql="""INSERT INTO canonical_behavior_events(canonical_event_id,run_id,profile_id,source_gen_run_id,target_date,event_time,event_type,uid,pcid,session_id,journey_id,journey_stage,product_id,cart_id,coupon_id,order_id,payment_id,delivery_id,customer_segment,device_type,page_type,funnel_stage,amount_expected,amount_actual,scenario_id,anomaly_type,reconciliation_flag,canonical_payload_json)
-    VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
+    sql="""INSERT INTO canonical_behavior_events(canonical_event_id,run_id,profile_id,source_gen_run_id,target_date,event_time,event_type,uid,pcid,session_id,journey_id,journey_stage,product_id,cart_id,coupon_id,order_id,payment_id,delivery_id,customer_segment,device_type,app_platform,app_version,sdk_version,page_type,funnel_stage,amount_expected,amount_actual,scenario_id,anomaly_type,reconciliation_flag,canonical_payload_json)
+    VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
     for r in rows:
         kv=parse_kv(r.get('kv_raw'))
         journey_id=kv.get('journey_id')
         if not journey_id: continue
-        vals.append((r.get('canonical_event_id'),a.run_id,a.profile_id,r.get('source_gen_run_id'),r.get('target_date'),r.get('event_time'),r.get('event_type'),r.get('uid'),r.get('pcid'),r.get('session_id'),journey_id,kv.get('journey_stage') or r.get('funnel_stage'),kv.get('product_id'),kv.get('cart_id'),kv.get('coupon_id'),kv.get('order_id'),kv.get('payment_id'),kv.get('delivery_id'),kv.get('customer_segment'),kv.get('device_type') or r.get('device_type'),r.get('page_type'),kv.get('funnel_stage') or r.get('funnel_stage'),num(kv.get('amount_expected')),num(kv.get('amount_actual')),r.get('scenario_id'),r.get('anomaly_type'),r.get('reconciliation_flag'),json.dumps({'canonical_events':r,'commerce_cookie':kv},ensure_ascii=False,default=str)))
+        vals.append((r.get('canonical_event_id'),a.run_id,a.profile_id,r.get('source_gen_run_id'),r.get('target_date'),r.get('event_time'),r.get('event_type'),r.get('uid'),r.get('pcid'),r.get('session_id'),journey_id,kv.get('journey_stage') or r.get('funnel_stage'),kv.get('product_id'),kv.get('cart_id'),kv.get('coupon_id'),kv.get('order_id'),kv.get('payment_id'),kv.get('delivery_id'),kv.get('customer_segment'),kv.get('device_type') or r.get('device_type'),r.get('app_platform') or kv.get('app_platform'),r.get('app_version') or kv.get('app_version'),r.get('sdk_version') or kv.get('sdk_version'),r.get('page_type'),kv.get('funnel_stage') or r.get('funnel_stage'),num(kv.get('amount_expected')),num(kv.get('amount_actual')),r.get('scenario_id'),r.get('anomaly_type'),r.get('reconciliation_flag'),json.dumps({'canonical_events':r,'commerce_cookie':kv},ensure_ascii=False,default=str)))
     if vals: cur.executemany(sql, vals)
     return len(vals)
 

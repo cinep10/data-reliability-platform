@@ -90,6 +90,9 @@ CREATE TABLE IF NOT EXISTS canonical_behavior_events (
   delivery_id VARCHAR(128) DEFAULT NULL,
   customer_segment VARCHAR(64) DEFAULT NULL,
   device_type VARCHAR(64) DEFAULT NULL,
+  app_platform VARCHAR(64) DEFAULT NULL,
+  app_version VARCHAR(64) DEFAULT NULL,
+  sdk_version VARCHAR(64) DEFAULT NULL,
   page_type VARCHAR(128) DEFAULT NULL,
   funnel_stage VARCHAR(128) DEFAULT NULL,
   amount_expected DECIMAL(18,2) DEFAULT NULL,
@@ -101,6 +104,7 @@ CREATE TABLE IF NOT EXISTS canonical_behavior_events (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (canonical_behavior_event_id),
   KEY idx_v05_cb_scope (profile_id, target_date, run_id, source_gen_run_id),
+  KEY idx_v05_cb_obs_meta (profile_id, source_gen_run_id, app_platform, app_version, sdk_version),
   KEY idx_v05_cb_journey (journey_id),
   KEY idx_v05_cb_order_payment (order_id, payment_id),
   KEY idx_v05_cb_stage_time (journey_stage, event_time)

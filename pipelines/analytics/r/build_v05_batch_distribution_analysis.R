@@ -15,6 +15,14 @@ run_id <- as.integer(
   arg_value(args, "--run-id", "0")
 )
 
+source_gen_run_id_raw <- arg_value(args, "--source-gen-run-id", "")
+source_gen_run_id <- if (nzchar(source_gen_run_id_raw)) {
+  suppressWarnings(as.integer(source_gen_run_id_raw))
+} else {
+  NA_integer_
+}
+source_gen_run_id_for_scope <- if (is.na(source_gen_run_id) || source_gen_run_id <= 0) NULL else source_gen_run_id
+
 scenario_name <- arg_value(
   args,
   "--scenario-name",
@@ -58,6 +66,33 @@ metric_delta <- read_scoped_table(
   scenario_name
 )
 
+
+# ------------------------------------------------------------------
+# Baseline Science Statistical Evidence Interface
+# ------------------------------------------------------------------
+statistical_evidence <- if (table_exists(con, "v05_baseline_science_statistical_evidence_day")) {
+  read_scoped_table(con, "v05_baseline_science_statistical_evidence_day", profile_id, dt, run_id, source_gen_run_id_for_scope, scenario_name)
+} else {
+  data.frame()
+}
+stat_evidence_rows <- if (nrow(statistical_evidence) > 0) {
+  statistical_evidence[statistical_evidence$evidence_domain %in% c("batch_metric_delta"), , drop = FALSE]
+} else {
+  data.frame()
+}
+statistical_evidence_score <- if (nrow(stat_evidence_rows) > 0 && "statistical_score" %in% names(stat_evidence_rows)) {
+  max(safe_number(stat_evidence_rows$statistical_score), na.rm = TRUE)
+} else { 0 }
+statistical_evidence_score <- ifelse(is.finite(statistical_evidence_score), statistical_evidence_score, 0)
+max_z_score <- if (nrow(stat_evidence_rows) > 0 && "z_score" %in% names(stat_evidence_rows)) max(abs(safe_number(stat_evidence_rows$z_score)), na.rm = TRUE) else 0
+max_z_score <- ifelse(is.finite(max_z_score), max_z_score, 0)
+max_historical_percentile <- if (nrow(stat_evidence_rows) > 0 && "historical_percentile" %in% names(stat_evidence_rows)) max(safe_number(stat_evidence_rows$historical_percentile), na.rm = TRUE) else 0
+max_historical_percentile <- ifelse(is.finite(max_historical_percentile), max_historical_percentile, 0)
+control_limit_breach_count <- if (nrow(stat_evidence_rows) > 0 && "control_limit_breach" %in% names(stat_evidence_rows)) sum(safe_number(stat_evidence_rows$control_limit_breach) > 0, na.rm = TRUE) else 0
+co_movement_score <- if (nrow(stat_evidence_rows) > 0 && "co_movement_score" %in% names(stat_evidence_rows)) max(safe_number(stat_evidence_rows$co_movement_score), na.rm = TRUE) else 0
+co_movement_score <- ifelse(is.finite(co_movement_score), co_movement_score, 0)
+statistical_significance <- if (statistical_evidence_score >= 0.75) "critical" else if (statistical_evidence_score >= 0.55) "warning" else if (statistical_evidence_score >= 0.30) "watch" else if (statistical_evidence_score >= 0.08) "low" else "stable"
+
 # ------------------------------------------------------------------
 # Analysis
 # ------------------------------------------------------------------
@@ -99,9 +134,24 @@ if (nrow(metric_delta) > 0 && "risk_score" %in% names(metric_delta)) {
 batch_distribution_score <- clamp01(
   max(
     ratio_shift_score,
-    volume_shift_score
+    volume_shift_score,
+    statistical_evidence_score
   )
 )
+
+# Baseline executions build reference data. Do not let reference-generation
+# self-noise appear as distribution WARN evidence.
+if (scenario_name == "baseline") {
+  ratio_shift_score <- 0
+  volume_shift_score <- 0
+  batch_distribution_score <- 0
+  statistical_evidence_score <- 0
+  max_z_score <- 0
+  max_historical_percentile <- 0
+  control_limit_breach_count <- 0
+  co_movement_score <- 0
+  statistical_significance <- "stable"
+}
 
 status_values <- character()
 
@@ -121,10 +171,17 @@ analysis_status <- if (any(status_values == "BASELINE_MISSING_REVIEW", na.rm = T
 
 analysis_reason <- paste0(
   "compare_rows=", nrow(distribution_compare),
+  ";source_gen_run_id=", ifelse(is.null(source_gen_run_id_for_scope), "NULL", as.character(source_gen_run_id_for_scope)),
   ";metric_delta_rows=", nrow(metric_delta),
   ";ratio_shift_score=", round(ratio_shift_score, 6),
   ";volume_shift_score=", round(volume_shift_score, 6),
-  ";baseline_status=", paste(unique(status_values), collapse = ",")
+  ";baseline_status=", paste(unique(status_values), collapse = ","),
+  ";statistical_evidence_score=", round(statistical_evidence_score, 6),
+  ";max_z_score=", round(max_z_score, 6),
+  ";historical_percentile=", round(max_historical_percentile, 4),
+  ";control_limit_breach_count=", control_limit_breach_count,
+  ";co_movement_score=", round(co_movement_score, 6),
+  ";statistical_significance=", statistical_significance
 )
 
 # ------------------------------------------------------------------
@@ -150,11 +207,23 @@ insert_schema_aware(
     run_id = run_id,
     scenario_name = scenario_name,
     dimension_name = "all",
-    max_distribution_shift_score = ratio_shift_score,
+    ratio_shift_score = ratio_shift_score,
+    volume_shift_score = volume_shift_score,
+    max_ratio_delta = ratio_shift_score,
+    max_distribution_shift_score = batch_distribution_score,
+    distribution_risk_score = batch_distribution_score,
     batch_distribution_score = batch_distribution_score,
     batch_distribution_risk_score = batch_distribution_score,
+    max_distribution_score = batch_distribution_score,
+    distribution_signal = ifelse(batch_distribution_score >= 0.20, "batch_distribution_shift", "none"),
     analysis_status = analysis_status,
     baseline_window = baseline_window,
+    statistical_evidence_score = statistical_evidence_score,
+    max_z_score = max_z_score,
+    max_historical_percentile = max_historical_percentile,
+    control_limit_breach_count = control_limit_breach_count,
+    co_movement_score = co_movement_score,
+    statistical_significance = statistical_significance,
     analysis_reason = analysis_reason
   )
 )

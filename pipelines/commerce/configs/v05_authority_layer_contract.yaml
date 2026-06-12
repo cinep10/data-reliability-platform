@@ -1,0 +1,120 @@
+# v0.5 Architecture Reclassification Contract
+# Purpose: prevent OBS, Baseline Science, Reliability Analysis, Unified Risk,
+# Semantic, and Action responsibilities from being mixed again.
+version: v05_phase3c_step1
+principle: "Risk Engine = productizable common authority; Semantic/Action = module knowledge base."
+
+layers:
+  observability_reference_evidence:
+    authority: false
+    description: "Developer/ops observability evidence. It observes WebServer/WC/SDK/app/client gaps but does not decide final business risk."
+    canonical_terms:
+      - "OBS = Reference Evidence"
+      - "developer/ops observability evidence"
+    representative_assets:
+      - pipelines/commerce/observability/build_v05_observability_measurement_day.py
+      - pipelines/commerce/observability/build_v05_obs_gap_measurement_layer.py
+      - pipelines/commerce/analytics/build_v05_observability_reliability_analysis.R
+      - pipelines/commerce/analytics/build_v05_observability_interpretation.R
+      - r_v05_observability_analysis_day
+      - r_v05_observability_interpretation_day
+    allowed_downstream_use:
+      - "supporting evidence"
+      - "root cause confidence support"
+      - "KPI distortion reference"
+    forbidden_downstream_use:
+      - "direct final risk authority"
+      - "direct final action authority without authority risk/classification"
+
+  baseline_science_authority_reference:
+    authority: true
+    description: "Common reference layer replacing real-world historical business/marketing experience in portfolio data."
+    canonical_terms:
+      - "Baseline Science = Authority Reference Layer"
+      - "common baseline reference"
+    representative_assets:
+      - pipelines/commerce/baseline/resolve_v05_baseline_reference.py
+      - pipelines/commerce/analytics/build_v05_baseline_science_statistical_evidence.R
+      - v05_baseline_science_statistical_evidence_day
+      - v05_obs_baseline_reference_day
+      - v05_obs_expected_metric_day
+      - v05_obs_threshold_calibration_day
+    role: "Provides baseline/expected/threshold/statistical reference to authority analytics."
+
+  reliability_analysis_authority_analytics:
+    authority: true
+    description: "Authority analytics interface consuming measurement, baseline science, runtime evidence, and cross-domain propagation evidence."
+    canonical_terms:
+      - "Reliability Analysis = Authority Analytics Layer"
+    representative_assets:
+      - pipelines/commerce/analytics/build_v05_reliability_analysis.R
+      - reliability_analysis_result_day_v05
+      - v05_cross_domain_propagation_evidence_day
+    role: "Feeds Unified Risk. OBS may only enter as mediated/supporting evidence."
+    fixed_risk_input_interface:
+      version: "v05_phase3c_step2_risk_input_v1"
+      required_outputs:
+        - statistical_evidence_effective_score
+        - statistical_significance
+        - cross_domain_propagation_strength
+        - affected_domains
+        - affected_domain_count
+        - reconciliation_confidence
+        - baseline_delta
+        - reconciliation_gap_score
+        - customer_impact_score
+        - transaction_loss_score
+
+  unified_risk_authority:
+    authority: true
+    description: "Final risk authority. Target model direction: Risk = Likelihood x Impact; Confidence is reported separately."
+    canonical_terms:
+      - "Unified Risk = Authority Risk Layer"
+      - "Risk = Likelihood x Impact"
+    representative_assets:
+      - pipelines/commerce/score/build_v05_unified_risk_score.R
+      - unified_reliability_score_day_v05
+    role: "Final risk score and risk level for operational/business decisions."
+
+  semantic_action_knowledge_base:
+    authority: false
+    description: "Module knowledge base for risk classification, narrative, and action catalog. It does not compute risk."
+    canonical_terms:
+      - "Semantic/Action = Knowledge Base"
+      - "Action Catalog"
+    representative_assets:
+      - pipelines/commerce/semantic/build_v05_semantic_interpretation.R
+      - pipelines/commerce/action/build_v05_action_recommendation.py
+      - pipelines/commerce/configs/v05_semantic_action_calibration.yaml
+    role: "Consumes Unified Risk output, classifies/narrates risk, and maps it to module-specific actions."
+    step5_contract:
+      semantic_input: "unified_reliability_score_day_v05"
+      semantic_output:
+        - risk_classification
+        - risk_narrative
+        - root_cause_candidate
+        - root_cause_confidence
+        - action_catalog_key
+      action_input:
+        - risk_classification
+        - authority_risk_level
+        - confidence_level
+        - root_cause_candidate
+      action_output: "module-specific Action Catalog entries"
+      forbidden_use:
+        - "semantic score as numeric risk driver"
+        - "action catalog as risk engine"
+
+validation:
+  required_comment_markers:
+    - "OBSERVABILITY REFERENCE EVIDENCE"
+    - "BASELINE SCIENCE = AUTHORITY REFERENCE LAYER"
+    - "AUTHORITY ANALYTICS LAYER"
+    - "AUTHORITY RISK LAYER"
+    - "KNOWLEDGE BASE"
+  required_shell_markers:
+    - "OBS=reference evidence"
+    - "Baseline Science=authority reference"
+    - "Reliability Analysis=authority analytics"
+    - "Unified Risk=authority risk"
+    - "Semantic/Action=knowledge base"

@@ -1,0 +1,456 @@
+{
+  "report_type": "operational_reliability_diagnostic_report",
+  "visualization_mode": "diagnostic_report",
+  "visualization_layer": "Phase4-D Visual Layer v6 Scenario-contract Mechanism Report",
+  "audience": "business_decision_support",
+  "figure_message": "KPI trust decision support",
+  "business_layer_ready": true,
+  "mechanism_visible": true,
+  "mechanism_source_visible": true,
+  "authority_obs_separation_visible": true,
+  "obs_reference_not_risk_engine": true,
+  "profile_id": "commerce_deliver",
+  "target_date": "2026-06-01",
+  "scenario_name": "source_ios_app_version_collection_missing",
+  "run_id": 787,
+  "source_gen_run_id": 780,
+  "observed_gap_rate": 0.0601,
+  "decision_reliability": "MEDIUM",
+  "business_impact": "SEGMENT-LEVEL",
+  "recommended_decision": "Audit affected segment before segment KPI decision",
+  "business_kpi_distortion_score": 0.5735,
+  "traffic_preservation_score": 0,
+  "criticality_evidence_score": 0.3088,
+  "conversion_gap_rate": 0.0576,
+  "pv_gap_rate": 0.0602,
+  "risk_score": 0.3886,
+  "overall_risk_score": 0.3886,
+  "risk_level": "warning",
+  "final_risk_level": "warning",
+  "risk_pattern": "localized_failure",
+  "pattern_confidence": 0.7716,
+  "risk_classification": "Operational Observability Reliability",
+  "failure_type": "Localized Reliability Failure",
+  "failure_mechanism": "identity_integrity_breakage",
+  "what_went_wrong": "User identification loss",
+  "mechanism_source": "app_version_concentration",
+  "where_to_investigate": "Affected app version / login cookie path",
+  "mechanism_confidence": 1,
+  "mechanism_view": "identity_integrity_view",
+  "visual_contract_override": true,
+  "mechanism_top_evidence_label": "Login User Identification",
+  "mechanism_secondary_evidence_label": "UID missing / login user gap",
+  "authority_action_count": 3,
+  "reference_obs_action_count": 2,
+  "action_visualization_mode": "card_table",
+  "primary_action_count": 3,
+  "investigation_hint_count": 2,
+  "authority_action_principle": "Authority actions are pattern-driven primary remediation actions.",
+  "reference_action_principle": "OBS reference actions support investigation/audit only and do not drive risk.",
+  "obs_does_not_drive_risk": true,
+  "customer_term_mapping": {
+    "risk_pattern": "Failure Type",
+    "failure_mechanism": "What went wrong",
+    "mechanism_source": "Where to investigate",
+    "evidence_primitive": "Supporting evidence",
+    "authority_action": "Primary action",
+    "obs_reference_action": "Investigation hint"
+  },
+  "figure_contracts": {
+    "fig03": {
+      "uses_business_kpi_ranking": true,
+      "mechanism_top_evidence_label": "Login User Identification",
+      "mechanism_view": "identity_integrity_view",
+      "differentiates_primary_secondary_scores": true,
+      "score_values_distinct": true,
+      "all_score_labels_identical": false,
+      "score_values": [0.82, 0.5084, 0.3116, 0.0602]
+    },
+    "fig05": {
+      "action_visualization_mode": "compact_card_table",
+      "prevents_text_clipping": true,
+      "customer_readable_table": true
+    },
+    "fig06": {
+      "mechanism_specific_view": "identity_integrity_view",
+      "numeric_labels_visible": true,
+      "top_evidence_label": "none / none",
+      "score_values_distinct": true,
+      "all_score_labels_identical": false,
+      "score_values": 0
+    },
+    "appendix02": {
+      "has_baseline_current_delta": true,
+      "fields": ["Baseline", "Current", "Delta", "Control Band", "Interpretation"],
+      "mode": "baseline_current_delta_table"
+    },
+    "appendix03": {
+      "mechanism_specific_view": "identity_integrity_view",
+      "source_matches_mechanism": true
+    },
+    "appendix04": {
+      "has_evidence_pattern_mechanism_risk_flow": true,
+      "layout": "vertical_flow_cards",
+      "prevents_text_clipping": true,
+      "sections": ["Evidence Primitive", "Failure Type", "Failure Mechanism", "Likelihood x Impact", "Risk", "Business Interpretation"]
+    }
+  },
+  "business_questions": {
+    "can_we_trust_this_kpi": "MEDIUM",
+    "how_much_data_is_missing": "6.0%",
+    "which_kpis_are_affected": "Login User Identification"
+  },
+  "action_layer_summary": {
+    "authority_actions": 3,
+    "reference_obs_actions": 2,
+    "principle": "Authority actions drive remediation. OBS reference actions support investigation only. OBS does not drive risk."
+  },
+  "report_layers": {
+    "business": [
+      {
+        "filename": "fig01_can_we_trust_this_kpi.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/business/fig01_can_we_trust_this_kpi.png",
+        "title": "Can We Trust This KPI?",
+        "report_layer": "business",
+        "audience_layer": "business",
+        "figure_role": "business_decision_reliability",
+        "size_bytes": 111543,
+        "source_tables": ["reliability_analysis_result_day_v05", "unified_reliability_score_day_v05"]
+      },
+      {
+        "filename": "fig02_how_much_data_is_missing.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/business/fig02_how_much_data_is_missing.png",
+        "title": "How Much Data Is Missing?",
+        "report_layer": "business",
+        "audience_layer": "business",
+        "figure_role": "missing_data_summary",
+        "size_bytes": 95233,
+        "source_tables": "v05_obs_metric_gap_day"
+      },
+      {
+        "filename": "fig03_business_kpi_impact_by_mechanism.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/business/fig03_business_kpi_impact_by_mechanism.png",
+        "title": "Business KPI Impact by Failure Mechanism",
+        "report_layer": "business",
+        "audience_layer": "business",
+        "figure_role": "business_kpi_impact_ranking",
+        "size_bytes": 108714,
+        "source_tables": ["v05_obs_metric_gap_day", "v05_obs_identity_gap_day", "v05_obs_url_semantic_gap_day", "v05_obs_business_kpi_gap_day"]
+      }
+    ],
+    "operational": [
+      {
+        "filename": "fig04_operational_risk_vs_business_kpi_risk.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/operational/fig04_operational_risk_vs_business_kpi_risk.png",
+        "title": "Operational Risk vs Business KPI Risk",
+        "report_layer": "operational",
+        "audience_layer": "operational",
+        "figure_role": "operational_vs_business_kpi_risk",
+        "size_bytes": 112220,
+        "source_tables": ["reliability_analysis_result_day_v05", "unified_reliability_score_day_v05", "v05_obs_business_kpi_gap_day"]
+      },
+      {
+        "filename": "fig05_recommended_action_plan.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/operational/fig05_recommended_action_plan.png",
+        "title": "Recommended Action Plan",
+        "report_layer": "operational",
+        "audience_layer": "operational",
+        "figure_role": "primary_action_investigation_hint_card_table",
+        "size_bytes": 120128,
+        "source_tables": ["action_recommendation_day_v05", "semantic_interpretation_day_v05"]
+      }
+    ],
+    "technical": [
+      {
+        "filename": "fig06_mechanism_root_cause_concentration.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/fig06_mechanism_root_cause_concentration.png",
+        "title": "Mechanism-specific Root Cause Concentration",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "mechanism_specific_root_cause_concentration",
+        "size_bytes": 65148,
+        "source_tables": "v05_obs_identity_gap_day"
+      },
+      {
+        "filename": "appendix01_web_vs_wc_evidence.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix01_web_vs_wc_evidence.png",
+        "title": "Web vs WC Evidence",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "web_wc_gap_evidence",
+        "size_bytes": 69606,
+        "source_tables": "v05_obs_metric_gap_day"
+      },
+      {
+        "filename": "appendix02_baseline_current_delta_diagnosis.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix02_baseline_current_delta_diagnosis.png",
+        "title": "Baseline vs Current Delta Diagnosis",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "baseline_current_delta_interpretation",
+        "size_bytes": 103785,
+        "source_tables": ["v05_baseline_science_statistical_evidence_day", "v05_obs_metric_gap_day"]
+      },
+      {
+        "filename": "appendix03_mechanism_specific_evidence.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix03_mechanism_specific_evidence.png",
+        "title": "Appendix 3. Identity Evidence",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "mechanism_specific_supporting_evidence",
+        "size_bytes": 64834,
+        "source_tables": "v05_obs_identity_gap_day"
+      },
+      {
+        "filename": "appendix04_evidence_pattern_mechanism_risk_flow.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix04_evidence_pattern_mechanism_risk_flow.png",
+        "title": "Evidence to Pattern to Mechanism to Risk Flow",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "evidence_pattern_mechanism_risk_decomposition",
+        "size_bytes": 114106,
+        "source_tables": ["reliability_analysis_result_day_v05", "unified_reliability_score_day_v05", "v05_obs_identity_gap_day", "v05_obs_url_semantic_gap_day", "v05_obs_business_kpi_gap_day"]
+      },
+      {
+        "filename": "appendix05_app_sdk_detailed_evidence.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix05_app_sdk_detailed_evidence.png",
+        "title": "App / SDK Detailed Evidence",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "app_sdk_detailed_reference_evidence",
+        "size_bytes": 100806,
+        "source_tables": ["v05_obs_app_version_measurement_day", "v05_obs_sdk_version_measurement_day"]
+      }
+    ]
+  },
+  "audience_layers": {
+    "business": [
+      {
+        "filename": "fig01_can_we_trust_this_kpi.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/business/fig01_can_we_trust_this_kpi.png",
+        "title": "Can We Trust This KPI?",
+        "report_layer": "business",
+        "audience_layer": "business",
+        "figure_role": "business_decision_reliability",
+        "size_bytes": 111543,
+        "source_tables": ["reliability_analysis_result_day_v05", "unified_reliability_score_day_v05"]
+      },
+      {
+        "filename": "fig02_how_much_data_is_missing.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/business/fig02_how_much_data_is_missing.png",
+        "title": "How Much Data Is Missing?",
+        "report_layer": "business",
+        "audience_layer": "business",
+        "figure_role": "missing_data_summary",
+        "size_bytes": 95233,
+        "source_tables": "v05_obs_metric_gap_day"
+      },
+      {
+        "filename": "fig03_business_kpi_impact_by_mechanism.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/business/fig03_business_kpi_impact_by_mechanism.png",
+        "title": "Business KPI Impact by Failure Mechanism",
+        "report_layer": "business",
+        "audience_layer": "business",
+        "figure_role": "business_kpi_impact_ranking",
+        "size_bytes": 108714,
+        "source_tables": ["v05_obs_metric_gap_day", "v05_obs_identity_gap_day", "v05_obs_url_semantic_gap_day", "v05_obs_business_kpi_gap_day"]
+      }
+    ],
+    "operational": [
+      {
+        "filename": "fig04_operational_risk_vs_business_kpi_risk.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/operational/fig04_operational_risk_vs_business_kpi_risk.png",
+        "title": "Operational Risk vs Business KPI Risk",
+        "report_layer": "operational",
+        "audience_layer": "operational",
+        "figure_role": "operational_vs_business_kpi_risk",
+        "size_bytes": 112220,
+        "source_tables": ["reliability_analysis_result_day_v05", "unified_reliability_score_day_v05", "v05_obs_business_kpi_gap_day"]
+      },
+      {
+        "filename": "fig05_recommended_action_plan.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/operational/fig05_recommended_action_plan.png",
+        "title": "Recommended Action Plan",
+        "report_layer": "operational",
+        "audience_layer": "operational",
+        "figure_role": "primary_action_investigation_hint_card_table",
+        "size_bytes": 120128,
+        "source_tables": ["action_recommendation_day_v05", "semantic_interpretation_day_v05"]
+      }
+    ],
+    "technical": [
+      {
+        "filename": "fig06_mechanism_root_cause_concentration.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/fig06_mechanism_root_cause_concentration.png",
+        "title": "Mechanism-specific Root Cause Concentration",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "mechanism_specific_root_cause_concentration",
+        "size_bytes": 65148,
+        "source_tables": "v05_obs_identity_gap_day"
+      },
+      {
+        "filename": "appendix01_web_vs_wc_evidence.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix01_web_vs_wc_evidence.png",
+        "title": "Web vs WC Evidence",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "web_wc_gap_evidence",
+        "size_bytes": 69606,
+        "source_tables": "v05_obs_metric_gap_day"
+      },
+      {
+        "filename": "appendix02_baseline_current_delta_diagnosis.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix02_baseline_current_delta_diagnosis.png",
+        "title": "Baseline vs Current Delta Diagnosis",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "baseline_current_delta_interpretation",
+        "size_bytes": 103785,
+        "source_tables": ["v05_baseline_science_statistical_evidence_day", "v05_obs_metric_gap_day"]
+      },
+      {
+        "filename": "appendix03_mechanism_specific_evidence.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix03_mechanism_specific_evidence.png",
+        "title": "Appendix 3. Identity Evidence",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "mechanism_specific_supporting_evidence",
+        "size_bytes": 64834,
+        "source_tables": "v05_obs_identity_gap_day"
+      },
+      {
+        "filename": "appendix04_evidence_pattern_mechanism_risk_flow.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix04_evidence_pattern_mechanism_risk_flow.png",
+        "title": "Evidence to Pattern to Mechanism to Risk Flow",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "evidence_pattern_mechanism_risk_decomposition",
+        "size_bytes": 114106,
+        "source_tables": ["reliability_analysis_result_day_v05", "unified_reliability_score_day_v05", "v05_obs_identity_gap_day", "v05_obs_url_semantic_gap_day", "v05_obs_business_kpi_gap_day"]
+      },
+      {
+        "filename": "appendix05_app_sdk_detailed_evidence.png",
+        "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix05_app_sdk_detailed_evidence.png",
+        "title": "App / SDK Detailed Evidence",
+        "report_layer": "technical",
+        "audience_layer": "technical",
+        "figure_role": "app_sdk_detailed_reference_evidence",
+        "size_bytes": 100806,
+        "source_tables": ["v05_obs_app_version_measurement_day", "v05_obs_sdk_version_measurement_day"]
+      }
+    ]
+  },
+  "figures": [
+    {
+      "filename": "fig01_can_we_trust_this_kpi.png",
+      "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/business/fig01_can_we_trust_this_kpi.png",
+      "title": "Can We Trust This KPI?",
+      "report_layer": "business",
+      "audience_layer": "business",
+      "figure_role": "business_decision_reliability",
+      "size_bytes": 111543,
+      "source_tables": ["reliability_analysis_result_day_v05", "unified_reliability_score_day_v05"]
+    },
+    {
+      "filename": "fig02_how_much_data_is_missing.png",
+      "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/business/fig02_how_much_data_is_missing.png",
+      "title": "How Much Data Is Missing?",
+      "report_layer": "business",
+      "audience_layer": "business",
+      "figure_role": "missing_data_summary",
+      "size_bytes": 95233,
+      "source_tables": "v05_obs_metric_gap_day"
+    },
+    {
+      "filename": "fig03_business_kpi_impact_by_mechanism.png",
+      "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/business/fig03_business_kpi_impact_by_mechanism.png",
+      "title": "Business KPI Impact by Failure Mechanism",
+      "report_layer": "business",
+      "audience_layer": "business",
+      "figure_role": "business_kpi_impact_ranking",
+      "size_bytes": 108714,
+      "source_tables": ["v05_obs_metric_gap_day", "v05_obs_identity_gap_day", "v05_obs_url_semantic_gap_day", "v05_obs_business_kpi_gap_day"]
+    },
+    {
+      "filename": "fig04_operational_risk_vs_business_kpi_risk.png",
+      "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/operational/fig04_operational_risk_vs_business_kpi_risk.png",
+      "title": "Operational Risk vs Business KPI Risk",
+      "report_layer": "operational",
+      "audience_layer": "operational",
+      "figure_role": "operational_vs_business_kpi_risk",
+      "size_bytes": 112220,
+      "source_tables": ["reliability_analysis_result_day_v05", "unified_reliability_score_day_v05", "v05_obs_business_kpi_gap_day"]
+    },
+    {
+      "filename": "fig05_recommended_action_plan.png",
+      "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/operational/fig05_recommended_action_plan.png",
+      "title": "Recommended Action Plan",
+      "report_layer": "operational",
+      "audience_layer": "operational",
+      "figure_role": "primary_action_investigation_hint_card_table",
+      "size_bytes": 120128,
+      "source_tables": ["action_recommendation_day_v05", "semantic_interpretation_day_v05"]
+    },
+    {
+      "filename": "fig06_mechanism_root_cause_concentration.png",
+      "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/fig06_mechanism_root_cause_concentration.png",
+      "title": "Mechanism-specific Root Cause Concentration",
+      "report_layer": "technical",
+      "audience_layer": "technical",
+      "figure_role": "mechanism_specific_root_cause_concentration",
+      "size_bytes": 65148,
+      "source_tables": "v05_obs_identity_gap_day"
+    },
+    {
+      "filename": "appendix01_web_vs_wc_evidence.png",
+      "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix01_web_vs_wc_evidence.png",
+      "title": "Web vs WC Evidence",
+      "report_layer": "technical",
+      "audience_layer": "technical",
+      "figure_role": "web_wc_gap_evidence",
+      "size_bytes": 69606,
+      "source_tables": "v05_obs_metric_gap_day"
+    },
+    {
+      "filename": "appendix02_baseline_current_delta_diagnosis.png",
+      "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix02_baseline_current_delta_diagnosis.png",
+      "title": "Baseline vs Current Delta Diagnosis",
+      "report_layer": "technical",
+      "audience_layer": "technical",
+      "figure_role": "baseline_current_delta_interpretation",
+      "size_bytes": 103785,
+      "source_tables": ["v05_baseline_science_statistical_evidence_day", "v05_obs_metric_gap_day"]
+    },
+    {
+      "filename": "appendix03_mechanism_specific_evidence.png",
+      "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix03_mechanism_specific_evidence.png",
+      "title": "Appendix 3. Identity Evidence",
+      "report_layer": "technical",
+      "audience_layer": "technical",
+      "figure_role": "mechanism_specific_supporting_evidence",
+      "size_bytes": 64834,
+      "source_tables": "v05_obs_identity_gap_day"
+    },
+    {
+      "filename": "appendix04_evidence_pattern_mechanism_risk_flow.png",
+      "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix04_evidence_pattern_mechanism_risk_flow.png",
+      "title": "Evidence to Pattern to Mechanism to Risk Flow",
+      "report_layer": "technical",
+      "audience_layer": "technical",
+      "figure_role": "evidence_pattern_mechanism_risk_decomposition",
+      "size_bytes": 114106,
+      "source_tables": ["reliability_analysis_result_day_v05", "unified_reliability_score_day_v05", "v05_obs_identity_gap_day", "v05_obs_url_semantic_gap_day", "v05_obs_business_kpi_gap_day"]
+    },
+    {
+      "filename": "appendix05_app_sdk_detailed_evidence.png",
+      "path": "/Volumes/EXTERNAL_USB/dev/repo/data-reliability-platform/artifacts/case_study/CASE-OBS-001/2026-06-01/source_ios_app_version_collection_missing/figures/technical/appendix05_app_sdk_detailed_evidence.png",
+      "title": "App / SDK Detailed Evidence",
+      "report_layer": "technical",
+      "audience_layer": "technical",
+      "figure_role": "app_sdk_detailed_reference_evidence",
+      "size_bytes": 100806,
+      "source_tables": ["v05_obs_app_version_measurement_day", "v05_obs_sdk_version_measurement_day"]
+    }
+  ]
+}

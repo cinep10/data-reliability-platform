@@ -171,9 +171,73 @@ pick_character <- function(row, columns, default = "none") {
   default
 }
 
+normalize_insert_aliases <- function(table_name, row, target_cols) {
+  # Backward/forward compatibility for v0.5 schema names that changed during
+  # the case-study implementation. Both aliases are populated only when the
+  # target column exists and the source value is available.
+  if (table_name == "r_batch_behavior_analysis_day") {
+    if (
+      "batch_overall_analysis_score" %in% target_cols &&
+        is.null(row[["batch_overall_analysis_score"]]) &&
+        !is.null(row[["overall_batch_behavior_score"]])
+    ) {
+      row[["batch_overall_analysis_score"]] <- row[["overall_batch_behavior_score"]]
+    }
+
+    if (
+      "overall_batch_behavior_score" %in% target_cols &&
+        is.null(row[["overall_batch_behavior_score"]]) &&
+        !is.null(row[["batch_overall_analysis_score"]])
+    ) {
+      row[["overall_batch_behavior_score"]] <- row[["batch_overall_analysis_score"]]
+    }
+  }
+
+  if (table_name == "r_batch_distribution_analysis_day") {
+    distribution_aliases <- c(
+      "distribution_risk_score",
+      "batch_distribution_score",
+      "batch_distribution_risk_score",
+      "max_distribution_shift_score",
+      "max_distribution_score"
+    )
+
+    available_alias_values <- distribution_aliases[
+      vapply(
+        distribution_aliases,
+        function(column_name) {
+          !is.null(row[[column_name]]) && !is.na(row[[column_name]])
+        },
+        logical(1)
+      )
+    ]
+
+    if (length(available_alias_values) > 0) {
+      canonical_score <- row[[available_alias_values[[1]]]]
+
+      for (column_name in distribution_aliases) {
+        if (column_name %in% target_cols && is.null(row[[column_name]])) {
+          row[[column_name]] <- canonical_score
+        }
+      }
+    }
+
+    if (
+      "max_ratio_delta" %in% target_cols &&
+        is.null(row[["max_ratio_delta"]]) &&
+        !is.null(row[["ratio_shift_score"]])
+    ) {
+      row[["max_ratio_delta"]] <- row[["ratio_shift_score"]]
+    }
+  }
+
+  row
+}
+
 insert_schema_aware <- function(con, table_name, row) {
   if (!table_exists(con, table_name)) stop(sprintf("missing target table: %s", table_name))
   target_cols <- table_columns(con, table_name)
+  row <- normalize_insert_aliases(table_name, row, target_cols)
   row_names <- names(row)
   keep <- row_names[row_names %in% target_cols]
   if (length(keep) < 1) stop(sprintf("no compatible columns for %s", table_name))

@@ -20,6 +20,9 @@ class VisitorIdentity:
     accept_lang: str = "ko-KR,ko;q=0.9,en-US;q=0.6,en;q=0.4"
     user_agent: str = ""
     ip: str = ""
+    app_platform: str = ""
+    app_version: str = ""
+    sdk_version: str = ""
 
 
 @dataclass(frozen=True)
@@ -61,6 +64,9 @@ class JourneyContext:
     ip: str
     user_agent: str
     visit_count: int
+    app_platform: str = ""
+    app_version: str = ""
+    sdk_version: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -77,6 +83,55 @@ def weighted_choice(items: list[dict[str, Any]], name_key: str = "name") -> dict
         if pick <= current:
             return item
     return items[-1]
+
+
+def _weighted_value(items: Any, default: str) -> str:
+    if not isinstance(items, list) or not items:
+        return default
+    normalized: list[tuple[str, float]] = []
+    for item in items:
+        if isinstance(item, dict):
+            normalized.append((str(item.get("value", item.get("name", default))), float(item.get("weight", 1.0))))
+        elif isinstance(item, (list, tuple)) and len(item) >= 2:
+            normalized.append((str(item[0]), float(item[1])))
+        else:
+            normalized.append((str(item), 1.0))
+    total = sum(max(0.0, w) for _, w in normalized)
+    if total <= 0:
+        return normalized[0][0]
+    pick = random.random() * total
+    cur = 0.0
+    for value, weight in normalized:
+        cur += max(0.0, weight)
+        if pick <= cur:
+            return value
+    return normalized[-1][0]
+
+
+def _sample_app_metadata(profile: dict[str, Any], device_type: str) -> tuple[str, str, str]:
+    """Sample stable app/sdk metadata for one visitor/session.
+
+    PC web and mobile web are responsive web and intentionally share the same
+    WC web SDK version. Native iOS/Android receive app-version and SDK-version
+    distributions so CASE-OBS-001 can measure version-specific collection gaps.
+    """
+    meta = profile.get("app_metadata", {}) if isinstance(profile.get("app_metadata"), dict) else {}
+    pc_web_platform = str(meta.get("pc_web_platform", "pc_web"))
+    mobile_web_platform = str(meta.get("mobile_web_platform", "mobile_web"))
+    ios_app_platform = str(meta.get("ios_app_platform", "ios_app"))
+    android_app_platform = str(meta.get("android_app_platform", "android_app"))
+    responsive_web_app_version = str(meta.get("responsive_web_app_version", "responsive-web-2026.06.0"))
+    responsive_web_sdk_version = str(meta.get("responsive_web_sdk_version", "wc-web-2.8.0"))
+
+    if str(device_type).lower() == "desktop":
+        return pc_web_platform, responsive_web_app_version, responsive_web_sdk_version
+
+    platform = _weighted_value(meta.get("mobile_platform_mix"), mobile_web_platform)
+    if platform == ios_app_platform:
+        return platform, _weighted_value(meta.get("ios_app_versions"), "ios-app-5.3.0"), _weighted_value(meta.get("ios_sdk_versions"), "wc-ios-3.2.1")
+    if platform == android_app_platform:
+        return platform, _weighted_value(meta.get("android_app_versions"), "android-app-4.9.0"), _weighted_value(meta.get("android_sdk_versions"), "wc-aos-2.7.1")
+    return mobile_web_platform, responsive_web_app_version, responsive_web_sdk_version
 
 
 def _choose_actor(segment: str, device_type: str, hour: int) -> str:
@@ -336,6 +391,7 @@ def build_journey_context(
         accept_lang = "ko-KR,ko;q=0.9,en-US;q=0.6,en;q=0.4"
         ip = f"223.113.{random.randint(1,254)}.{random.randint(1,254)}"
         user_agent = "Mozilla/5.0 (Linux; Android 14; SM-S918N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36"
+        app_platform, app_version, sdk_version = _sample_app_metadata(profile, device_type)
     else:
         visitor_id = visitor.visitor_id
         customer_id = visitor.customer_id
@@ -346,6 +402,9 @@ def build_journey_context(
         accept_lang = visitor.accept_lang
         ip = visitor.ip
         user_agent = visitor.user_agent
+        app_platform = visitor.app_platform
+        app_version = visitor.app_version
+        sdk_version = visitor.sdk_version
 
     coupon_id = ""
     discount = 0
@@ -394,5 +453,8 @@ def build_journey_context(
         ip=ip,
         user_agent=user_agent,
         visit_count=int(getattr(visitor, "visit_count", 1) if visitor is not None else 1),
+        app_platform=app_platform,
+        app_version=app_version,
+        sdk_version=sdk_version,
         **flags,
     )

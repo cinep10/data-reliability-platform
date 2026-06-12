@@ -169,16 +169,32 @@ if (length(metric_values) < 2) {
 
     list(
       metric_pair = pair_name,
+      left_metric = parts[[1]],
+      right_metric = parts[[2]],
+      left_score = left,
+      right_score = right,
+      coupled_score = coupled_score,
+      directional_gap = directional_gap,
+      co_movement_type = if (coupled_score >= 0.60) {
+        "coupled_high_risk_movement"
+      } else if (coupled_score >= 0.20) {
+        "coupled_warning_movement"
+      } else {
+        "neutral_or_decoupled_movement"
+      },
       corr_value = coupled_score,
       baseline_corr_value = 0,
       corr_delta = directional_gap,
       anomaly_score = coupled_score,
       anomaly_status = score_status(coupled_score, warn = 0.20, high = 0.60),
       analysis_reason = paste0(
-        "baseline_mode=", baseline_mode,
+        "method=score_co_movement_diagnostic;not_statistical_correlation=true",
+        ";baseline_mode=", baseline_mode,
         ";baseline_window=", baseline_window,
-        ";left=", round(left, 6),
-        ";right=", round(right, 6),
+        ";left_metric=", parts[[1]],
+        ";right_metric=", parts[[2]],
+        ";left_score=", round(left, 6),
+        ";right_score=", round(right, 6),
         ";coupled_score=", round(coupled_score, 6),
         ";directional_gap=", round(directional_gap, 6)
       )
@@ -217,6 +233,13 @@ for (row in pair_scores) {
       run_id = run_id,
       scenario_name = scenario_name,
       metric_pair = row$metric_pair,
+      left_metric = ifelse(is.null(row$left_metric), NA, row$left_metric),
+      right_metric = ifelse(is.null(row$right_metric), NA, row$right_metric),
+      left_score = ifelse(is.null(row$left_score), NA, row$left_score),
+      right_score = ifelse(is.null(row$right_score), NA, row$right_score),
+      coupled_score = ifelse(is.null(row$coupled_score), row$anomaly_score, row$coupled_score),
+      directional_gap = ifelse(is.null(row$directional_gap), row$corr_delta, row$directional_gap),
+      co_movement_type = ifelse(is.null(row$co_movement_type), row$anomaly_status, row$co_movement_type),
       corr_value = row$corr_value,
       baseline_corr_value = row$baseline_corr_value,
       corr_delta = row$corr_delta,

@@ -81,6 +81,42 @@ def _page_type(stage: str) -> str:
     return mapping.get(stage, stage)
 
 
+
+
+def _resolve_app_metadata(ctx: JourneyContext, profile: dict[str, Any]) -> tuple[str, str, str]:
+    """Return app_platform/app_version/sdk_version for behavior observability.
+
+    CASE-OBS-001 Phase2 treats PC web and mobile web as responsive web: they
+    may have different app_platform values for analysis, but they intentionally
+    share the same WC web SDK version. Native app values can be supplied later
+    through profile["app_metadata"] without changing the source contract.
+    """
+    explicit_platform = str(getattr(ctx, "app_platform", "") or "")
+    explicit_app_version = str(getattr(ctx, "app_version", "") or "")
+    explicit_sdk_version = str(getattr(ctx, "sdk_version", "") or "")
+    if explicit_platform and explicit_app_version and explicit_sdk_version:
+        return explicit_platform, explicit_app_version, explicit_sdk_version
+
+    meta = profile.get("app_metadata", {}) if isinstance(profile.get("app_metadata"), dict) else {}
+    device_type = str(getattr(ctx, "device_type", "") or "").lower()
+
+    pc_web_platform = str(meta.get("pc_web_platform", "pc_web"))
+    mobile_web_platform = str(meta.get("mobile_web_platform", "mobile_web"))
+    ios_app_platform = str(meta.get("ios_app_platform", "ios_app"))
+    android_app_platform = str(meta.get("android_app_platform", "android_app"))
+    responsive_web_app_version = str(meta.get("responsive_web_app_version", "responsive-web-2026.06.0"))
+    responsive_web_sdk_version = str(meta.get("responsive_web_sdk_version", "wc-web-2.8.0"))
+
+    explicit_platform_l = explicit_platform.lower()
+    if explicit_platform_l in {"ios", "native_ios", "ios_app"}:
+        return ios_app_platform, "ios-app-5.3.0", "wc-ios-3.2.1"
+    if explicit_platform_l in {"android", "native_android", "android_app"}:
+        return android_app_platform, "android-app-4.9.0", "wc-aos-2.7.1"
+
+    if device_type == "desktop":
+        return pc_web_platform, responsive_web_app_version, responsive_web_sdk_version
+    return mobile_web_platform, responsive_web_app_version, responsive_web_sdk_version
+
 def _cookie(ctx: JourneyContext, stage: str, stage_index: int, profile: dict[str, Any], anomaly: dict[str, Any], status: str, latency_ms: int) -> str:
     scenario = str(anomaly.get("scenario_id", anomaly.get("scenario_name", "baseline")))
     if scenario == "none":
@@ -95,11 +131,15 @@ def _cookie(ctx: JourneyContext, stage: str, stage_index: int, profile: dict[str
     auth_start_idx = int(getattr(ctx, "auth_start_stage_index", -1) or -1)
     cookie_uid = auth_uid if auth_uid and auth_start_idx >= 0 and int(stage_index) >= auth_start_idx else ""
     uid_present = "1" if cookie_uid else "0"
+    app_platform, app_version, sdk_version = _resolve_app_metadata(ctx, profile)
     pairs = {
         # Existing v0.4 source contract style fields
         "cc": getattr(ctx, "country", "KR"),
         "al": str(getattr(ctx, "accept_lang", "ko-KR,ko;q=0.9,en-US;q=0.6,en;q=0.4")).replace(";", ",").replace("=", "_"),
         "device": ctx.device_type,
+        "app_platform": app_platform,
+        "app_version": app_version,
+        "sdk_version": sdk_version,
         "pcid": ctx.pcid,
         "sid": ctx.session_id,
         "uid": cookie_uid,

@@ -77,6 +77,44 @@ def _pick_accept_language(profile: dict[str, Any], cc: str) -> str:
     return _weighted_pair_choice(pool, "ko-KR,ko;q=0.9,en-US;q=0.6,en;q=0.4")
 
 
+def _weighted_value(items: Any, default: str) -> str:
+    return _weighted_pair_choice(items, default)
+
+
+def _pick_app_metadata(profile: dict[str, Any], device_type: str) -> tuple[str, str, str]:
+    meta = profile.get("app_metadata", {}) if isinstance(profile.get("app_metadata"), dict) else {}
+    pc_web_platform = str(meta.get("pc_web_platform", "pc_web"))
+    mobile_web_platform = str(meta.get("mobile_web_platform", "mobile_web"))
+    ios_app_platform = str(meta.get("ios_app_platform", "ios_app"))
+    android_app_platform = str(meta.get("android_app_platform", "android_app"))
+    responsive_web_app_version = str(meta.get("responsive_web_app_version", "responsive-web-2026.06.0"))
+    responsive_web_sdk_version = str(meta.get("responsive_web_sdk_version", "wc-web-2.8.0"))
+
+    if str(device_type).lower() == "desktop":
+        return pc_web_platform, responsive_web_app_version, responsive_web_sdk_version
+
+    platform = _weighted_value(meta.get("mobile_platform_mix"), mobile_web_platform)
+    if platform == ios_app_platform:
+        return platform, _weighted_value(meta.get("ios_app_versions"), "ios-app-5.3.0"), _weighted_value(meta.get("ios_sdk_versions"), "wc-ios-3.2.1")
+    if platform == android_app_platform:
+        return platform, _weighted_value(meta.get("android_app_versions"), "android-app-4.9.0"), _weighted_value(meta.get("android_sdk_versions"), "wc-aos-2.7.1")
+    return mobile_web_platform, responsive_web_app_version, responsive_web_sdk_version
+
+
+def _pick_user_agent_for_app(profile: dict[str, Any], device_type: str, app_platform: str) -> str:
+    if app_platform == "ios_app":
+        return random.choice(profile.get("uas_ios_app") or [
+            "CommerceDeliverApp/5.3.0 (iPhone; iOS 18.5) WCSDK/wc-ios-3.2.1",
+            "CommerceDeliverApp/5.2.1 (iPhone; iOS 18.4) WCSDK/wc-ios-3.2.0",
+        ])
+    if app_platform == "android_app":
+        return random.choice(profile.get("uas_android_app") or [
+            "CommerceDeliverApp/4.9.0 (Android 14; SM-S918N) WCSDK/wc-aos-2.7.1",
+            "CommerceDeliverApp/4.8.1 (Android 14; Pixel 8) WCSDK/wc-aos-2.7.0",
+        ])
+    return _pick_user_agent(profile, device_type)
+
+
 @dataclass
 class IdentityPool:
     profile: dict[str, Any]
@@ -91,6 +129,10 @@ class IdentityPool:
         device = weighted_choice(self.profile.get("device_types", [{"name": "mobile", "weight": 1}]))
         country = _weighted_pair_choice(self.profile.get("countries"), "KR")
         device_type = str(device.get("name", "mobile"))
+        app_platform, app_version, sdk_version = _pick_app_metadata(self.profile, device_type)
+        # Native apps are mobile app surfaces even if the generic device sampler produced tablet.
+        if app_platform in {"ios_app", "android_app"}:
+            device_type = "mobile"
         visitor_id = f"V{uuid.uuid4().hex[:12]}"
         ip = _random_ip_for_country(country)
         return VisitorIdentity(
@@ -103,8 +145,11 @@ class IdentityPool:
             visit_count=1,
             country=country,
             accept_lang=_pick_accept_language(self.profile, country),
-            user_agent=_pick_user_agent(self.profile, device_type),
+            user_agent=_pick_user_agent_for_app(self.profile, device_type, app_platform),
             ip=ip,
+            app_platform=app_platform,
+            app_version=app_version,
+            sdk_version=sdk_version,
         )
 
     def _reuse_visitor(self, base: VisitorIdentity, when: datetime) -> VisitorIdentity:
@@ -130,6 +175,9 @@ class IdentityPool:
             accept_lang=base.accept_lang,
             user_agent=base.user_agent,
             ip=ip,
+            app_platform=base.app_platform,
+            app_version=base.app_version,
+            sdk_version=base.sdk_version,
         )
 
     def get(self, when: datetime) -> VisitorIdentity:

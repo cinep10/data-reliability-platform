@@ -5,6 +5,41 @@ timezone: Asia/Seoul
 seed: 42
 run_id: v05_phase1
 
+# CASE-OBS-001 Phase2 metadata.
+# PC web and mobile web are responsive web and therefore share the same WC SDK version.
+app_metadata:
+  pc_web_platform: pc_web
+  mobile_web_platform: mobile_web
+  ios_app_platform: ios_app
+  android_app_platform: android_app
+
+  # PC web and mobile web are responsive web: same app/sdk versions by design.
+  responsive_web_app_version: responsive-web-2026.06.0
+  responsive_web_sdk_version: wc-web-2.8.0
+
+  # Native app distributions for CASE-OBS-001 Phase2-A.
+  # These are segment dimensions, not SDK function-level evidence.
+  ios_app_versions:
+    - {value: ios-app-5.2.0, weight: 0.20}
+    - {value: ios-app-5.2.1, weight: 0.35}
+    - {value: ios-app-5.3.0, weight: 0.45}
+  ios_sdk_versions:
+    - {value: wc-ios-3.2.0, weight: 0.55}
+    - {value: wc-ios-3.2.1, weight: 0.45}
+  android_app_versions:
+    - {value: android-app-4.8.0, weight: 0.25}
+    - {value: android-app-4.8.1, weight: 0.35}
+    - {value: android-app-4.9.0, weight: 0.40}
+  android_sdk_versions:
+    - {value: wc-aos-2.7.0, weight: 0.60}
+    - {value: wc-aos-2.7.1, weight: 0.40}
+
+  # Desktop is always pc_web. Mobile/tablet traffic is split across responsive web and native apps.
+  mobile_platform_mix:
+    - {value: mobile_web, weight: 0.55}
+    - {value: ios_app, weight: 0.25}
+    - {value: android_app, weight: 0.20}
+
 # v0.5 must reuse the v0.4 weblog simulator behavior assets.
 # The bridge loads the legacy finance_bank.yaml and reuses traffic curve, device/UA pools,
 # revisit/session/PV calibration, then applies commerce URL/query/cookie semantics.

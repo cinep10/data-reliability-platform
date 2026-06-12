@@ -132,9 +132,23 @@ ON DUPLICATE KEY UPDATE
     metric_version=VALUES(metric_version)
 """
 
-batch_params = [args.profile_id, args.dt_from, args.dt_to, args.profile_id, args.dt_from, args.dt_to]
+batch_params = [
+    args.profile_id,
+    args.dt_from,
+    args.dt_to,
+]
+
 if args.run_id is not None:
-    batch_params.extend([args.run_id, args.run_id])
+    batch_params.append(args.run_id)
+
+batch_params.extend([
+    args.profile_id,
+    args.dt_from,
+    args.dt_to,
+])
+
+if args.run_id is not None:
+    batch_params.append(args.run_id)
 
 batch_sql = f"""
 INSERT INTO pipeline_availability_run (

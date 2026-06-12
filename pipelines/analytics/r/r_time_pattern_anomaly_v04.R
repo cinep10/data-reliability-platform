@@ -138,6 +138,13 @@ batch_volume_score <- ifelse(
   0
 )
 
+localized_time_distortion_score <- clamp01(
+  max(
+    ratio_shift_score,
+    count_delta_score - (batch_volume_score * 0.50)
+  )
+)
+
 time_pattern_score <- clamp01(
   max(
     ratio_shift_score,
@@ -145,6 +152,24 @@ time_pattern_score <- clamp01(
     batch_volume_score * 0.70
   )
 )
+
+dominant_hour <- "none"
+dominant_hour_delta_rate <- 0
+
+if (
+  nrow(hour_distribution) > 0 &&
+    all(c("dimension_value", "current_count", "baseline_count_avg") %in% names(hour_distribution))
+) {
+  current_count <- safe_number(hour_distribution$current_count)
+  baseline_count <- safe_number(hour_distribution$baseline_count_avg)
+  hour_delta_rate <- abs(current_count - baseline_count) / pmax(abs(baseline_count), 1)
+  max_idx <- which.max(hour_delta_rate)
+
+  if (length(max_idx) > 0 && is.finite(hour_delta_rate[[max_idx]])) {
+    dominant_hour <- as.character(hour_distribution$dimension_value[[max_idx]])
+    dominant_hour_delta_rate <- hour_delta_rate[[max_idx]]
+  }
+}
 
 baseline_status_values <- character()
 
@@ -178,6 +203,9 @@ analysis_reason <- paste0(
   ";ratio_shift_score=", round(ratio_shift_score, 6),
   ";count_delta_score=", round(count_delta_score, 6),
   ";batch_volume_score=", round(batch_volume_score, 6),
+  ";localized_time_distortion_score=", round(localized_time_distortion_score, 6),
+  ";dominant_hour=", dominant_hour,
+  ";dominant_hour_delta_rate=", round(dominant_hour_delta_rate, 6),
   ";baseline_status=", paste(unique(baseline_status_values), collapse = ",")
 )
 
@@ -213,6 +241,12 @@ insert_schema_aware(
     delta_ratio = time_pattern_score,
     anomaly_score = time_pattern_score,
     anomaly_status = analysis_status,
+    ratio_shift_score = ratio_shift_score,
+    count_delta_score = count_delta_score,
+    volume_delta_score = batch_volume_score,
+    localized_time_distortion_score = localized_time_distortion_score,
+    dominant_hour = dominant_hour,
+    dominant_hour_delta_rate = dominant_hour_delta_rate,
     analysis_reason = analysis_reason
   )
 )
@@ -223,11 +257,13 @@ insert_schema_aware(
 
 cat(
   sprintf(
-    "[R_TIME_PATTERN_V05_INTERFACE] rows=%d ratio_score=%.6f count_score=%.6f volume_score=%.6f score=%.6f status=%s baseline_window=%s\n",
+    "[R_TIME_PATTERN_V05_INTERFACE] rows=%d ratio_score=%.6f count_score=%.6f volume_score=%.6f localized_score=%.6f dominant_hour=%s score=%.6f status=%s baseline_window=%s\n",
     nrow(hour_distribution),
     ratio_shift_score,
     count_delta_score,
     batch_volume_score,
+    localized_time_distortion_score,
+    dominant_hour,
     time_pattern_score,
     analysis_status,
     baseline_window

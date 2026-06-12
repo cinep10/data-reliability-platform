@@ -12,8 +12,10 @@ simulator/customer_journey_sim/runners/__init__.py
 simulator/customer_journey_sim/runners/apply_source_runtime_anomaly.py
 simulator/customer_journey_sim/runners/generate_phase1.py
 simulator/customer_journey_sim/runners/validate_phase1.py
+simulator/customer_journey_sim/scenario/__init__.py
 simulator/customer_journey_sim/scenario/resolve_v05_scenario.py
 simulator/customer_journey_sim/source/__init__.py
+simulator/customer_journey_sim/source/apply_v05_source_runtime_anomaly.py
 simulator/customer_journey_sim/source/register_phase1_source_files.py
 simulator/customer_journey_sim/source/register_phase1_source_files_v05_exogenous.py
 simulator/customer_journey_sim/source/register_v05_exogenous_scenario.py

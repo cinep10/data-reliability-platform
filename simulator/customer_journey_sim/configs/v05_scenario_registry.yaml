@@ -216,3 +216,48 @@ scenarios:
     - web-wc reconciliation check
     - observability KPI annotation
     calibration_mode: review
+
+  source_ios_app_version_collection_missing:
+    family: source_observability_anomaly
+    source_generation_scenario: baseline
+    use_exogenous: false
+    runtime_apply: false
+    runtime_apply_mode: wc_collection_missing
+    expected_risk_family: observability_app_version_collection
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  source_ios_sdk_version_collection_missing:
+    family: source_observability_anomaly
+    source_generation_scenario: baseline
+    use_exogenous: false
+    runtime_apply: false
+    runtime_apply_mode: wc_collection_missing
+    expected_risk_family: observability_sdk_version_collection
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  source_sdk_version_collection_missing:
+    family: source_observability_anomaly
+    source_generation_scenario: baseline
+    use_exogenous: false
+    runtime_apply: false
+    runtime_apply_mode: wc_collection_missing
+    expected_risk_family: observability_sdk_version_collection
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true
+  source_ios_purchase_event_collection_missing:
+    family: source_observability_anomaly
+    source_generation_scenario: baseline
+    use_exogenous: false
+    runtime_apply: false
+    runtime_apply_mode: wc_collection_missing
+    expected_risk_family: observability_conversion_event_collection
+    run_v04_evidence_measurement: true
+    run_v04_legacy_decision: false
+    run_v05_phase3_phase4: true
+    run_integrated_validation: true

@@ -30,6 +30,10 @@ CONTRACT_KEYS = [
     "financial_product","state_transition","expected_state","actual_state","amount_expected","amount_actual",
     "amount_delta","approval_result","execution_result","account_status","ledger_status","balance_delta",
     "reconciliation_flag",
+    # CASE-OBS-001 Phase2 metadata propagation.
+    # PC web and mobile web use the same responsive web WC SDK version;
+    # app_platform/app_version keep the observation dimension, not SDK function detail.
+    "app_platform","app_version","sdk_version",
 ]
 
 # DB-safe contract columns: run_id cookie is stored as run_id_cookie to avoid conflict with pipeline run_id.
